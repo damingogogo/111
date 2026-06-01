@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout :: head('物资基础信息')"></head>
+<body>
+<nav th:replace="fragments/layout :: sidebar"></nav>
+<div class="main-content">
+    <div th:replace="fragments/layout :: topbar"></div>
+    <div class="page-header d-flex justify-content-between align-items-center">
+        <h4><i class="bi bi-box text-primary"></i> 物资基础信息</h4>
+        <div>
+            <button class="btn btn-success btn-sm" onclick="downloadTemplate()">
+                <i class="bi bi-download"></i> 下载模板
+            </button>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalImport">
+                <i class="bi bi-upload"></i> Excel导入
+            </button>
+            <button class="btn btn-info btn-sm" onclick="exportData()">
+                <i class="bi bi-file-earmark-excel"></i> 导出全部
+            </button>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalMaterial" onclick="openAdd()">
+                <i class="bi bi-plus-lg"></i> 新增物资
+            </button>
+        </div>
+    </div>
+
+    <div class="search-bar">
+        <div class="row g-2">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" id="searchKeyword" placeholder="搜索物资编码/名称/型号" onkeyup="if(event.key==='Enter')loadData()">
+                    <button class="btn btn-primary" onclick="loadData()">搜索</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>物资编码</th>
+                    <th>名称</th>
+                    <th>型号</th>
+                    <th>单位</th>
+                    <th>备注</th>
+                    <th>创建时间</th>
+                    <th width="120">操作</th>
+                </tr>
+            </thead>
+            <tbody id="dataBody"><tr><td colspan="8" class="text-center text-muted py-4">加载中...</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 新增/编辑弹窗 -->
+<div class="modal fade" id="modalMaterial" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">新增物资</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="mId">
+                <div class="mb-3">
+                    <label class="form-label">物资编码 <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="mCode" placeholder="如 WZ-0001">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">名称 <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="mName" placeholder="物资名称">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">型号</label>
+                    <input type="text" class="form-control" id="mModel" placeholder="规格型号">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">单位</label>
+                    <input type="text" class="form-control" id="mUnit" placeholder="如 米/颗/台">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">备注</label>
+                    <textarea class="form-control" id="mRemark" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveMaterial()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 导入弹窗 -->
+<div class="modal fade" id="modalImport" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Excel批量导入</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">请先<a href="#" onclick="downloadTemplate();return false;">下载模板</a>，按格式填写后上传。</p>
+                <input type="file" class="form-control" id="importFile" accept=".xlsx,.xls">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="doImport()">导入</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="fragments/layout :: scripts"></div>
+<script>
+let editId = null;
+
+function loadData() {
+    var kw = $('#searchKeyword').val();
+    $.get('/api/materials', {keyword: kw}, function(data) {
+        var html = '';
+        if (!data || data.length === 0) {
+            html = '<tr><td colspan="8" class="text-center text-muted py-4">暂无数据</td></tr>';
+        } else {
+            data.forEach(function(item) {
+                html += '<tr>'
+                    + '<td>' + item.id + '</td>'
+                    + '<td><code>' + escapeHtml(item.materialCode) + '</code></td>'
+                    + '<td>' + escapeHtml(item.name) + '</td>'
+                    + '<td>' + escapeHtml(item.model || '') + '</td>'
+                    + '<td>' + escapeHtml(item.unit || '') + '</td>'
+                    + '<td>' + escapeHtml(item.remark || '') + '</td>'
+                    + '<td>' + (item.createdAt ? item.createdAt.replace('T',' ') : '') + '</td>'
+                    + '<td>'
+                    + '<button class="btn btn-sm btn-outline-primary me-1" onclick="openEdit(' + item.id + ',\'' + escapeJs(item.materialCode) + '\',\'' + escapeJs(item.name) + '\',\'' + escapeJs(item.model||'') + '\',\'' + escapeJs(item.unit||'') + '\',\'' + escapeJs(item.remark||'') + '\')">编辑</button>'
+                    + '<button class="btn btn-sm btn-outline-danger" onclick="deleteMaterial(' + item.id + ')">删除</button>'
+                    + '</td></tr>';
+            });
+        }
+        $('#dataBody').html(html);
+    });
+}
+
+function openAdd() {
+    editId = null;
+    $('#modalTitle').text('新增物资');
+    $('#mId').val('');
+    $('#mCode').val('');
+    $('#mName').val('');
+    $('#mModel').val('');
+    $('#mUnit').val('');
+    $('#mRemark').val('');
+}
+
+function openEdit(id, code, name, model, unit, remark) {
+    editId = id;
+    $('#modalTitle').text('编辑物资');
+    $('#mId').val(id);
+    $('#mCode').val(code);
+    $('#mName').val(name);
+    $('#mModel').val(model);
+    $('#mUnit').val(unit);
+    $('#mRemark').val(remark);
+    new bootstrap.Modal(document.getElementById('modalMaterial')).show();
+}
+
+function saveMaterial() {
+    var code = $('#mCode').val().trim();
+    var name = $('#mName').val().trim();
+    if (!code || !name) { alert('物资编码和名称为必填项'); return; }
+    var data = {
+        materialCode: code,
+        name: name,
+        model: $('#mModel').val().trim(),
+        unit: $('#mUnit').val().trim(),
+        remark: $('#mRemark').val().trim()
+    };
+    if (editId) {
+        $.ajax({url: '/api/materials/' + editId, type: 'PUT', contentType: 'application/json', data: JSON.stringify(data), success: function() {
+            bootstrap.Modal.getInstance(document.getElementById('modalMaterial')).hide();
+            loadData();
+        }});
+    } else {
+        $.ajax({url: '/api/materials', type: 'POST', contentType: 'application/json', data: JSON.stringify(data), success: function() {
+            bootstrap.Modal.getInstance(document.getElementById('modalMaterial')).hide();
+            loadData();
+        }});
+    }
+}
+
+function deleteMaterial(id) {
+    if (!confirm('确定删除该物资吗？')) return;
+    $.ajax({url: '/api/materials/' + id, type: 'DELETE', success: function() { loadData(); }});
+}
+
+function downloadTemplate() {
+    window.open('/api/materials/template');
+}
+
+function exportData() {
+    var kw = $('#searchKeyword').val();
+    window.open('/api/materials/export?keyword=' + encodeURIComponent(kw));
+}
+
+function doImport() {
+    var file = $('#importFile')[0].files[0];
+    if (!file) { alert('请选择文件'); return; }
+    var fd = new FormData();
+    fd.append('file', file);
+    $.ajax({
+        url: '/api/materials/import', type: 'POST', data: fd,
+        processData: false, contentType: false,
+        success: function(res) {
+            alert('导入成功：新增 ' + res.inserted + ' 条，更新 ' + res.updated + ' 条');
+            bootstrap.Modal.getInstance(document.getElementById('modalImport')).hide();
+            loadData();
+        },
+        error: function(xhr) {
+            alert('导入失败：' + (xhr.responseJSON?.message || xhr.statusText));
+        }
+    });
+}
+
+function escapeHtml(s) {
+    return s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
+}
+function escapeJs(s) {
+    return s ? s.replace(/\\/g,'\\\\').replace(/'/g,"\\'") : '';
+}
+
+$(function() { loadData(); });
+</script>
+</body>
+</html>

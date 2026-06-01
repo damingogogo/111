@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout :: head('物资到货入库管理系统')"></head>
+<body>
+<nav th:replace="fragments/layout :: sidebar"></nav>
+<div class="main-content">
+    <div th:replace="fragments/layout :: topbar"></div>
+    <div class="page-header d-flex justify-content-between align-items-center">
+        <h4><i class="bi bi-speedometer2 text-primary"></i> 首页概览</h4>
+        <span class="text-muted small">v1.0.0 | 物资到货登记 · 认领 · 验收 · 上架 · 入库</span>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-2">
+            <div class="stat-card">
+                <div class="label">物资总数</div>
+                <div class="value stat-物资" id="stat-materials">0</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card">
+                <div class="label">待认领</div>
+                <div class="value stat-待认领" id="stat-待认领">0</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card">
+                <div class="label">已认领</div>
+                <div class="value stat-已认领" id="stat-已认领">0</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card">
+                <div class="label">已验收</div>
+                <div class="value stat-已验收" id="stat-已验收">0</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card">
+                <div class="label">已上架</div>
+                <div class="value stat-已上架" id="stat-已上架">0</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card">
+                <div class="label">已入库</div>
+                <div class="value stat-已入库" id="stat-已入库">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header"><i class="bi bi-lightning-charge text-warning"></i> 快速操作</div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <a href="/materials" class="btn btn-outline-primary w-100 py-3">
+                                <i class="bi bi-box fs-4 d-block mb-2"></i>
+                                物资基础信息
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="/arrivals" class="btn btn-outline-warning w-100 py-3">
+                                <i class="bi bi-truck fs-4 d-block mb-2"></i>
+                                到货登记
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="/warehousing" class="btn btn-outline-success w-100 py-3">
+                                <i class="bi bi-clipboard-check fs-4 d-block mb-2"></i>
+                                入库管理
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="/export" class="btn btn-outline-info w-100 py-3">
+                                <i class="bi bi-file-earmark-excel fs-4 d-block mb-2"></i>
+                                进度导出
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header"><i class="bi bi-info-circle text-info"></i> 系统说明</div>
+                <div class="card-body">
+                    <p class="mb-2"><strong>① 物资基础信息</strong><br><span class="text-muted small">导入或手动添加物资编码/名称/型号/单位，支持Excel批量导入。</span></p>
+                    <p class="mb-2"><strong>② 到货登记</strong><br><span class="text-muted small">录入物资编码自动联动名称/型号/单位，填写供应商、数量等信息。</span></p>
+                    <p class="mb-2"><strong>③ 入库管理</strong><br><span class="text-muted small">管库员认领、填写验收/上架时间、入库单号，状态自动推进。</span></p>
+                    <p class="mb-0"><strong>④ 进度导出</strong><br><span class="text-muted small">按筛选条件预览并导出Excel，用于汇报或留档。</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="fragments/layout :: scripts"></div>
+<script>
+function loadStats() {
+    $.get('/api/stats', function(res) {
+        $('#stat-materials').text(res.materials || 0);
+        var bs = res.byStatus || {};
+        $('#stat-待认领').text(bs['待认领'] || 0);
+        $('#stat-已认领').text(bs['已认领'] || 0);
+        $('#stat-已验收').text(bs['已验收'] || 0);
+        $('#stat-已上架').text(bs['已上架'] || 0);
+        $('#stat-已入库').text(bs['已入库'] || 0);
+    });
+}
+$(function() { loadStats(); });
+</script>
+</body>
+</html>

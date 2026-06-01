@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout :: head('进度导出')"></head>
+<body>
+<nav th:replace="fragments/layout :: sidebar"></nav>
+<div class="main-content">
+    <div th:replace="fragments/layout :: topbar"></div>
+    <div class="page-header d-flex justify-content-between align-items-center">
+        <h4><i class="bi bi-file-earmark-excel text-info"></i> 进度导出</h4>
+    </div>
+
+    <div class="search-bar">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-2">
+                <label class="form-label small text-muted">关键字</label>
+                <input type="text" class="form-control" id="filterKeyword" placeholder="编码/名称/单号" onkeyup="if(event.key==='Enter')loadData()">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted">状态</label>
+                <select class="form-select" id="filterStatus">
+                    <option value="">全部</option>
+                    <option value="待认领">待认领</option>
+                    <option value="已认领">已认领</option>
+                    <option value="已验收">已验收</option>
+                    <option value="已上架">已上架</option>
+                    <option value="已入库">已入库</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted">供应商</label>
+                <input type="text" class="form-control" id="filterSupplier" placeholder="供应商" list="supplierList">
+                <datalist id="supplierList"></datalist>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted">管库员</label>
+                <input type="text" class="form-control" id="filterKeeper" placeholder="管库员" list="keeperList">
+                <datalist id="keeperList"></datalist>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted">日期起</label>
+                <input type="date" class="form-control" id="filterDateFrom">
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary w-100" onclick="loadData()">查询预览</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="text-muted small" id="resultCount">共 0 条记录</span>
+        <div>
+            <button class="btn btn-success btn-sm" onclick="exportArrivals()">
+                <i class="bi bi-download"></i> 导出到货入库进度
+            </button>
+            <button class="btn btn-primary btn-sm ms-2" onclick="exportMaterials()">
+                <i class="bi bi-download"></i> 导出物资基础数据
+            </button>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>物资编码</th>
+                    <th>名称</th>
+                    <th>型号</th>
+                    <th>单位</th>
+                    <th>供应商</th>
+                    <th>到货数量</th>
+                    <th>件数</th>
+                    <th>重量</th>
+                    <th>管库员</th>
+                    <th>验收时间</th>
+                    <th>上架时间</th>
+                    <th>入库单号</th>
+                    <th>登记时间</th>
+                    <th>状态</th>
+                    <th>备注</th>
+                </tr>
+            </thead>
+            <tbody id="dataBody"><tr><td colspan="16" class="text-center text-muted py-4">点击「查询预览」加载数据</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+<div th:replace="fragments/layout :: scripts"></div>
+<script>
+function loadData() {
+    var params = {
+        keyword: $('#filterKeyword').val(),
+        status: $('#filterStatus').val(),
+        supplier: $('#filterSupplier').val(),
+        keeper: $('#filterKeeper').val(),
+        dateFrom: $('#filterDateFrom').val() ? $('#filterDateFrom').val() + ' 00:00:00' : '',
+        dateTo: ''
+    };
+    $.get('/api/arrivals', params, function(data) {
+        var html = '';
+        $('#resultCount').text('共 ' + (data ? data.length : 0) + ' 条记录');
+        if (!data || data.length === 0) {
+            html = '<tr><td colspan="16" class="text-center text-muted py-4">暂无数据</td></tr>';
+        } else {
+            data.forEach(function(item) {
+                var statusClass = 'badge-' + (item.status || '待认领');
+                html += '<tr class="status-' + (item.status || '') + '">'
+                    + '<td>' + item.id + '</td>'
+                    + '<td><code>' + escapeHtml(item.materialCode) + '</code></td>'
+                    + '<td>' + escapeHtml(item.name || '') + '</td>'
+                    + '<td>' + escapeHtml(item.model || '') + '</td>'
+                    + '<td>' + escapeHtml(item.unit || '') + '</td>'
+                    + '<td>' + escapeHtml(item.supplier || '') + '</td>'
+                    + '<td>' + (item.arrivalQuantity || 0) + '</td>'
+                    + '<td>' + (item.packageCount || 0) + '</td>'
+                    + '<td>' + (item.weight || 0) + '</td>'
+                    + '<td>' + escapeHtml(item.warehouseKeeper || '') + '</td>'
+                    + '<td>' + (item.acceptanceTime ? item.acceptanceTime.replace('T',' ').substring(0,16) : '') + '</td>'
+                    + '<td>' + (item.shelvingTime ? item.shelvingTime.replace('T',' ').substring(0,16) : '') + '</td>'
+                    + '<td>' + escapeHtml(item.receiptNumber || '') + '</td>'
+                    + '<td>' + (item.arrivalTime ? item.arrivalTime.replace('T',' ').substring(0,16) : '') + '</td>'
+                    + '<td><span class="badge-status ' + statusClass + '">' + (item.status || '待认领') + '</span></td>'
+                    + '<td>' + escapeHtml(item.remark || '') + '</td>'
+                    + '</tr>';
+            });
+        }
+        $('#dataBody').html(html);
+    });
+}
+
+function loadDistinct() {
+    $.get('/api/distinct/suppliers', function(data) {
+        var html = '';
+        data.forEach(function(s) { html += '<option value="' + escapeHtml(s) + '">'; });
+        $('#supplierList').html(html);
+    });
+    $.get('/api/distinct/keepers', function(data) {
+        var html = '';
+        data.forEach(function(k) { html += '<option value="' + escapeHtml(k) + '">'; });
+        $('#keeperList').html(html);
+    });
+}
+
+function exportArrivals() {
+    var params = {
+        keyword: $('#filterKeyword').val(),
+        status: $('#filterStatus').val(),
+        supplier: $('#filterSupplier').val(),
+        keeper: $('#filterKeeper').val(),
+        dateFrom: $('#filterDateFrom').val() ? $('#filterDateFrom').val() + ' 00:00:00' : '',
+        dateTo: ''
+    };
+    fetch('/api/export/arrivals', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(params)
+    }).then(function(r) {
+        if (!r.ok) throw new Error('导出失败');
+        var disp = r.headers.get('content-disposition');
+        var fname = '到货入库进度.xlsx';
+        if (disp) {
+            var m = disp.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+            if (m) fname = decodeURIComponent(m[1].replace(/['"]/g, ''));
+        }
+        return r.blob().then(function(b) {
+            var url = URL.createObjectURL(b);
+            var a = document.createElement('a');
+            a.href = url; a.download = fname; document.body.appendChild(a); a.click();
+            document.body.removeChild(a); URL.revokeObjectURL(url);
+        });
+    }).catch(function(e) { alert(e.message); });
+}
+
+function exportMaterials() {
+    window.open('/api/materials/export');
+}
+
+function escapeHtml(s) {
+    return s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
+}
+
+$(function() { loadDistinct(); loadData(); });
+</script>
+</body>
+</html>

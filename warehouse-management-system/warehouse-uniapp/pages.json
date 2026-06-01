@@ -1,0 +1,87 @@
+{
+  "pages": [
+    {
+      "path": "pages/login/login",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "登录"
+      }
+    },
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "工作台",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/materials/materials",
+      "style": {
+        "navigationBarTitleText": "物资档案",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/material-form/material-form",
+      "style": {
+        "navigationBarTitleText": "物资信息"
+      }
+    },
+    {
+      "path": "pages/arrivals/arrivals",
+      "style": {
+        "navigationBarTitleText": "到货登记",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/arrival-form/arrival-form",
+      "style": {
+        "navigationBarTitleText": "到货信息"
+      }
+    },
+    {
+      "path": "pages/warehousing/warehousing",
+      "style": {
+        "navigationBarTitleText": "入库处理",
+        "enablePullDownRefresh": true
+      }
+    }
+  ],
+  "tabBar": {
+    "position": "bottom",
+    "color": "#94A3B8",
+    "selectedColor": "#4F46E5",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "工作台",
+        "iconPath": "static/tabbar/home.png",
+        "selectedIconPath": "static/tabbar/home-active.png"
+      },
+      {
+        "pagePath": "pages/arrivals/arrivals",
+        "text": "到货登记",
+        "iconPath": "static/tabbar/arrival.png",
+        "selectedIconPath": "static/tabbar/arrival-active.png"
+      },
+      {
+        "pagePath": "pages/warehousing/warehousing",
+        "text": "入库处理",
+        "iconPath": "static/tabbar/warehouse.png",
+        "selectedIconPath": "static/tabbar/warehouse-active.png"
+      }
+    ]
+  },
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "物资入库",
+    "navigationBarBackgroundColor": "#F8FAFC",
+    "backgroundColor": "#F8FAFC",
+    "app-plus": {
+      "background": "#F8FAFC"
+    }
+  }
+}

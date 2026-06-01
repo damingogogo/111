@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout :: head('入库管理')"></head>
+<body>
+<nav th:replace="fragments/layout :: sidebar"></nav>
+<div class="main-content">
+    <div th:replace="fragments/layout :: topbar"></div>
+    <div class="page-header d-flex justify-content-between align-items-center">
+        <h4><i class="bi bi-clipboard-check text-success"></i> 入库管理</h4>
+    </div>
+
+    <div class="search-bar">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-2">
+                <label class="form-label small text-muted">关键字</label>
+                <input type="text" class="form-control" id="filterKeyword" placeholder="编码/名称/单号" onkeyup="if(event.key==='Enter')loadData()">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted">状态</label>
+                <select class="form-select" id="filterStatus">
+                    <option value="">全部</option>
+                    <option value="待认领">待认领</option>
+                    <option value="已认领">已认领</option>
+                    <option value="已验收">已验收</option>
+                    <option value="已上架">已上架</option>
+                    <option value="已入库">已入库</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted">供应商</label>
+                <input type="text" class="form-control" id="filterSupplier" placeholder="供应商" list="supplierList">
+                <datalist id="supplierList"></datalist>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted">管库员</label>
+                <input type="text" class="form-control" id="filterKeeper" placeholder="管库员" list="keeperList">
+                <datalist id="keeperList"></datalist>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted">日期起</label>
+                <input type="date" class="form-control" id="filterDateFrom">
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary w-100" onclick="loadData()">查询</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>物资编码</th>
+                    <th>名称</th>
+                    <th>供应商</th>
+                    <th>数量</th>
+                    <th>管库员</th>
+                    <th>验收时间</th>
+                    <th>上架时间</th>
+                    <th>入库单号</th>
+                    <th>状态</th>
+                    <th width="160">操作</th>
+                </tr>
+            </thead>
+            <tbody id="dataBody"><tr><td colspan="11" class="text-center text-muted py-4">加载中...</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 认领弹窗 -->
+<div class="modal fade" id="modalClaim" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">管库员认领</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <input type="hidden" id="claimId">
+                <label class="form-label">管库员姓名</label>
+                <input type="text" class="form-control" id="claimKeeper" placeholder="请输入管库员姓名">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="doClaim()">确认认领</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 入库弹窗 -->
+<div class="modal fade" id="modalStore" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">确认入库</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <input type="hidden" id="storeId">
+                <label class="form-label">入库单号</label>
+                <input type="text" class="form-control" id="storeReceipt" placeholder="请输入入库单号">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="doStore()">确认入库</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="fragments/layout :: scripts"></div>
+<script>
+function loadData() {
+    var params = {
+        keyword: $('#filterKeyword').val(),
+        status: $('#filterStatus').val(),
+        supplier: $('#filterSupplier').val(),
+        keeper: $('#filterKeeper').val(),
+        dateFrom: $('#filterDateFrom').val() ? $('#filterDateFrom').val() + ' 00:00:00' : '',
+        dateTo: ''
+    };
+    $.get('/api/arrivals', params, function(data) {
+        var html = '';
+        if (!data || data.length === 0) {
+            html = '<tr><td colspan="11" class="text-center text-muted py-4">暂无数据</td></tr>';
+        } else {
+            data.forEach(function(item) {
+                var statusClass = 'badge-' + (item.status || '待认领');
+                var ops = [];
+                if (item.status === '待认领') {
+                    ops.push('<button class="btn btn-sm btn-outline-warning me-1" onclick="showClaim(' + item.id + ')" title="认领">认领</button>');
+                }
+                if (item.status === '已认领') {
+                    ops.push('<button class="btn btn-sm btn-outline-primary me-1" onclick="doAccept(' + item.id + ')" title="验收">验收</button>');
+                }
+                if (item.status === '已验收') {
+                    ops.push('<button class="btn btn-sm btn-outline-success me-1" onclick="doShelf(' + item.id + ')" title="上架">上架</button>');
+                }
+                if (item.status === '已上架') {
+                    ops.push('<button class="btn btn-sm btn-outline-info me-1" onclick="showStore(' + item.id + ')" title="入库">入库</button>');
+                }
+                ops.push('<button class="btn btn-sm btn-outline-danger" onclick="deleteArrival(' + item.id + ')" title="删除"><i class="bi bi-trash"></i></button>');
+
+                html += '<tr class="status-' + (item.status || '') + '">'
+                    + '<td>' + item.id + '</td>'
+                    + '<td><code>' + escapeHtml(item.materialCode) + '</code></td>'
+                    + '<td>' + escapeHtml(item.name || '') + '</td>'
+                    + '<td>' + escapeHtml(item.supplier || '') + '</td>'
+                    + '<td>' + (item.arrivalQuantity || 0) + ' ' + escapeHtml(item.unit || '') + '</td>'
+                    + '<td>' + escapeHtml(item.warehouseKeeper || '') + '</td>'
+                    + '<td>' + (item.acceptanceTime ? item.acceptanceTime.replace('T',' ').substring(0,16) : '') + '</td>'
+                    + '<td>' + (item.shelvingTime ? item.shelvingTime.replace('T',' ').substring(0,16) : '') + '</td>'
+                    + '<td>' + escapeHtml(item.receiptNumber || '') + '</td>'
+                    + '<td><span class="badge-status ' + statusClass + '">' + (item.status || '待认领') + '</span></td>'
+                    + '<td>' + ops.join('') + '</td></tr>';
+            });
+        }
+        $('#dataBody').html(html);
+    });
+}
+
+function loadDistinct() {
+    $.get('/api/distinct/suppliers', function(data) {
+        var html = '';
+        data.forEach(function(s) { html += '<option value="' + escapeHtml(s) + '">'; });
+        $('#supplierList').html(html);
+    });
+    $.get('/api/distinct/keepers', function(data) {
+        var html = '';
+        data.forEach(function(k) { html += '<option value="' + escapeHtml(k) + '">'; });
+        $('#keeperList').html(html);
+    });
+}
+
+function showClaim(id) {
+    $('#claimId').val(id);
+    $('#claimKeeper').val('');
+    new bootstrap.Modal(document.getElementById('modalClaim')).show();
+}
+
+function doClaim() {
+    var id = $('#claimId').val();
+    var keeper = $('#claimKeeper').val().trim();
+    if (!keeper) { alert('请输入管库员姓名'); return; }
+    $.ajax({
+        url: '/api/arrivals/' + id + '/claim',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({keeper: keeper}),
+        success: function() {
+            bootstrap.Modal.getInstance(document.getElementById('modalClaim')).hide();
+            loadData(); loadDistinct();
+        }
+    });
+}
+
+function doAccept(id) {
+    if (!confirm('确认验收该物资？')) return;
+    $.post('/api/arrivals/' + id + '/accept', function() { loadData(); });
+}
+
+function doShelf(id) {
+    if (!confirm('确认上架该物资？')) return;
+    $.post('/api/arrivals/' + id + '/shelf', function() { loadData(); });
+}
+
+function showStore(id) {
+    $('#storeId').val(id);
+    $('#storeReceipt').val('');
+    new bootstrap.Modal(document.getElementById('modalStore')).show();
+}
+
+function doStore() {
+    var id = $('#storeId').val();
+    var receipt = $('#storeReceipt').val().trim();
+    if (!receipt) { alert('请输入入库单号'); return; }
+    $.ajax({
+        url: '/api/arrivals/' + id + '/store',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({receiptNumber: receipt}),
+        success: function() {
+            bootstrap.Modal.getInstance(document.getElementById('modalStore')).hide();
+            loadData();
+        }
+    });
+}
+
+function deleteArrival(id) {
+    if (!confirm('确定删除该记录吗？')) return;
+    $.ajax({url: '/api/arrivals/' + id, type: 'DELETE', success: function() { loadData(); }});
+}
+
+function escapeHtml(s) {
+    return s ? s.replace(/\&/g,'&amp;').replace(/\</g,'&lt;').replace(/\>/g,'&gt;') : '';
+}
+
+$(function() { loadData(); loadDistinct(); });
+</script>
+</body>
+</html>

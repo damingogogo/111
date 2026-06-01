@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout :: head('到货登记')"></head>
+<body>
+<nav th:replace="fragments/layout :: sidebar"></nav>
+<div class="main-content">
+    <div th:replace="fragments/layout :: topbar"></div>
+    <div class="page-header d-flex justify-content-between align-items-center">
+        <h4><i class="bi bi-truck text-warning"></i> 到货登记</h4>
+        <div>
+            <button class="btn btn-success btn-sm" onclick="downloadTemplate()">
+                <i class="bi bi-download"></i> 下载模板
+            </button>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalImport">
+                <i class="bi bi-upload"></i> Excel导入
+            </button>
+            <button class="btn btn-warning btn-sm text-white" data-bs-toggle="modal" data-bs-target="#modalArrival" onclick="openAdd()">
+                <i class="bi bi-plus-lg"></i> 新增到货
+            </button>
+        </div>
+    </div>
+
+    <div class="search-bar">
+        <div class="row g-2">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" id="searchKeyword" placeholder="搜索物资编码/名称" onkeyup="if(event.key==='Enter')loadData()">
+                    <button class="btn btn-primary" onclick="loadData()">搜索</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>物资编码</th>
+                    <th>名称</th>
+                    <th>型号</th>
+                    <th>单位</th>
+                    <th>供应商</th>
+                    <th>到货数量</th>
+                    <th>件数</th>
+                    <th>重量</th>
+                    <th>登记时间</th>
+                    <th>状态</th>
+                    <th width="100">操作</th>
+                </tr>
+            </thead>
+            <tbody id="dataBody"><tr><td colspan="12" class="text-center text-muted py-4">加载中...</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 新增/编辑弹窗 -->
+<div class="modal fade" id="modalArrival" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">新增到货</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="aId">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">物资编码 <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="aCode" placeholder="输入编码自动联动" onblur="autoFillMaterial()">
+                            <button class="btn btn-outline-secondary" type="button" onclick="autoFillMaterial()">查询</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">名称</label>
+                        <input type="text" class="form-control" id="aName" readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">型号</label>
+                        <input type="text" class="form-control" id="aModel" readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">单位</label>
+                        <input type="text" class="form-control" id="aUnit" readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">供应商</label>
+                        <input type="text" class="form-control" id="aSupplier" placeholder="供应商名称">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">到货数量</label>
+                        <input type="number" class="form-control" id="aQuantity" placeholder="0" step="0.001">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">件数</label>
+                        <input type="number" class="form-control" id="aPackages" placeholder="0">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">重量</label>
+                        <input type="number" class="form-control" id="aWeight" placeholder="0" step="0.001">
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label">备注</label>
+                        <textarea class="form-control" id="aRemark" rows="2"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveArrival()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 导入弹窗 -->
+<div class="modal fade" id="modalImport" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Excel批量导入到货</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">请先<a href="#" onclick="downloadTemplate();return false;">下载模板</a>，按格式填写后上传。</p>
+                <input type="file" class="form-control" id="importFile" accept=".xlsx,.xls">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="doImport()">导入</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="fragments/layout :: scripts"></div>
+<script>
+let editId = null;
+
+function loadData() {
+    var kw = $('#searchKeyword').val();
+    $.get('/api/arrivals', {keyword: kw}, function(data) {
+        var html = '';
+        if (!data || data.length === 0) {
+            html = '<tr><td colspan="12" class="text-center text-muted py-4">暂无数据</td></tr>';
+        } else {
+            data.forEach(function(item) {
+                var statusClass = 'badge-' + (item.status || '待认领');
+                html += '<tr class="status-' + (item.status || '') + '">'
+                    + '<td>' + item.id + '</td>'
+                    + '<td><code>' + escapeHtml(item.materialCode) + '</code></td>'
+                    + '<td>' + escapeHtml(item.name || '') + '</td>'
+                    + '<td>' + escapeHtml(item.model || '') + '</td>'
+                    + '<td>' + escapeHtml(item.unit || '') + '</td>'
+                    + '<td>' + escapeHtml(item.supplier || '') + '</td>'
+                    + '<td>' + (item.arrivalQuantity || 0) + '</td>'
+                    + '<td>' + (item.packageCount || 0) + '</td>'
+                    + '<td>' + (item.weight || 0) + '</td>'
+                    + '<td>' + (item.arrivalTime ? item.arrivalTime.replace('T',' ').substring(0,16) : '') + '</td>'
+                    + '<td><span class="badge-status ' + statusClass + '">' + (item.status || '待认领') + '</span></td>'
+                    + '<td>'
+                    + '<button class="btn btn-sm btn-outline-primary me-1" onclick="openEdit(' + item.id + ')" title="编辑"><i class="bi bi-pencil"></i></button>'
+                    + '<button class="btn btn-sm btn-outline-danger" onclick="deleteArrival(' + item.id + ')" title="删除"><i class="bi bi-trash"></i></button>'
+                    + '</td></tr>';
+            });
+        }
+        $('#dataBody').html(html);
+    });
+}
+
+function autoFillMaterial() {
+    var code = $('#aCode').val().trim();
+    if (!code) return;
+    $.get('/api/materials/' + encodeURIComponent(code), function(data) {
+        if (data && data.name) {
+            $('#aName').val(data.name);
+            $('#aModel').val(data.model || '');
+            $('#aUnit').val(data.unit || '');
+        } else {
+            // 精确匹配不到，尝试模糊搜索
+            $.get('/api/materials?keyword=' + encodeURIComponent(code), function(list) {
+                if (list && list.length > 0) {
+                    $('#aName').val(list[0].name);
+                    $('#aModel').val(list[0].model || '');
+                    $('#aUnit').val(list[0].unit || '');
+                } else {
+                    $('#aName').val('');
+                    $('#aModel').val('');
+                    $('#aUnit').val('');
+                }
+            });
+        }
+    }).fail(function() {
+        // 请求失败也尝试模糊搜索
+        $.get('/api/materials?keyword=' + encodeURIComponent(code), function(list) {
+            if (list && list.length > 0) {
+                $('#aName').val(list[0].name);
+                $('#aModel').val(list[0].model || '');
+                $('#aUnit').val(list[0].unit || '');
+            }
+        });
+    });
+}
+
+function openAdd() {
+    editId = null;
+    $('#modalTitle').text('新增到货');
+    $('#aId').val('');
+    $('#aCode').val('').prop('readonly', false);
+    $('#aName').val('');
+    $('#aModel').val('');
+    $('#aUnit').val('');
+    $('#aSupplier').val('');
+    $('#aQuantity').val('');
+    $('#aPackages').val('');
+    $('#aWeight').val('');
+    $('#aRemark').val('');
+}
+
+function openEdit(id) {
+    editId = id;
+    $('#modalTitle').text('编辑到货');
+    $.get('/api/arrivals/' + id, function(item) {
+        $('#aId').val(item.id);
+        $('#aCode').val(item.materialCode).prop('readonly', true);
+        $('#aName').val(item.name || '');
+        $('#aModel').val(item.model || '');
+        $('#aUnit').val(item.unit || '');
+        $('#aSupplier').val(item.supplier || '');
+        $('#aQuantity').val(item.arrivalQuantity || '');
+        $('#aPackages').val(item.packageCount || '');
+        $('#aWeight').val(item.weight || '');
+        $('#aRemark').val(item.remark || '');
+        new bootstrap.Modal(document.getElementById('modalArrival')).show();
+    });
+}
+
+function saveArrival() {
+    var code = $('#aCode').val().trim();
+    if (!code) { alert('物资编码为必填项'); return; }
+    var data = {
+        materialCode: code,
+        name: $('#aName').val().trim(),
+        model: $('#aModel').val().trim(),
+        unit: $('#aUnit').val().trim(),
+        supplier: $('#aSupplier').val().trim(),
+        arrivalQuantity: parseFloat($('#aQuantity').val()) || 0,
+        packageCount: parseInt($('#aPackages').val()) || 0,
+        weight: parseFloat($('#aWeight').val()) || 0,
+        remark: $('#aRemark').val().trim()
+    };
+    if (editId) {
+        $.ajax({url: '/api/arrivals/' + editId, type: 'PUT', contentType: 'application/json', data: JSON.stringify(data), success: function() {
+            bootstrap.Modal.getInstance(document.getElementById('modalArrival')).hide();
+            loadData();
+        }});
+    } else {
+        $.ajax({url: '/api/arrivals', type: 'POST', contentType: 'application/json', data: JSON.stringify(data), success: function() {
+            bootstrap.Modal.getInstance(document.getElementById('modalArrival')).hide();
+            loadData();
+        }});
+    }
+}
+
+function deleteArrival(id) {
+    if (!confirm('确定删除该到货记录吗？')) return;
+    $.ajax({url: '/api/arrivals/' + id, type: 'DELETE', success: function() { loadData(); }});
+}
+
+function downloadTemplate() {
+    window.open('/api/arrivals/template');
+}
+
+function doImport() {
+    var file = $('#importFile')[0].files[0];
+    if (!file) { alert('请选择文件'); return; }
+    var fd = new FormData();
+    fd.append('file', file);
+    $.ajax({
+        url: '/api/arrivals/import', type: 'POST', data: fd,
+        processData: false, contentType: false,
+        success: function(res) {
+            alert('导入成功：共 ' + res.count + ' 条');
+            bootstrap.Modal.getInstance(document.getElementById('modalImport')).hide();
+            loadData();
+        },
+        error: function(xhr) {
+            alert('导入失败：' + (xhr.responseJSON?.message || xhr.statusText));
+        }
+    });
+}
+
+function escapeHtml(s) {
+    return s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
+}
+
+$(function() { loadData(); });
+</script>
+</body>
+</html>

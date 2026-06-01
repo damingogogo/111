@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 物资到货入库管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: "Microsoft YaHei","微软雅黑",sans-serif;
+        }
+        .login-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,.3);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+        }
+        .login-icon {
+            width: 72px;
+            height: 72px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+        .login-icon i {
+            font-size: 32px;
+            color: #fff;
+        }
+        .login-title {
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        .login-subtitle {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 28px;
+        }
+        .form-control {
+            padding: 12px 16px;
+            font-size: 0.95rem;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+        }
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,.15);
+        }
+        .input-group-text {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-right: none;
+            border-radius: 10px 0 0 10px;
+            color: #888;
+        }
+        .input-group .form-control {
+            border-left: none;
+            border-radius: 0 10px 10px 0;
+        }
+        .btn-login {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            width: 100%;
+            color: #fff;
+            transition: all .2s;
+        }
+        .btn-login:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(102,126,234,.4);
+            color: #fff;
+        }
+        .error-msg {
+            background: #fff3f3;
+            color: #dc3545;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 小圆点 */
+        .secret-dot {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255,255,255,.25);
+            cursor: pointer;
+            transition: all .2s;
+            z-index: 1000;
+        }
+        .secret-dot:hover {
+            background: rgba(255,255,255,.5);
+            transform: scale(1.3);
+        }
+        .secret-dot.active {
+            background: rgba(255,255,255,.7);
+        }
+
+        /* 快速登录面板 */
+        .quick-login-panel {
+            position: fixed;
+            bottom: 60px;
+            right: 20px;
+            width: 260px;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,.2);
+            padding: 20px;
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px);
+            transition: all .3s ease;
+        }
+        .quick-login-panel.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .quick-login-panel .panel-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 14px;
+            text-align: center;
+        }
+        .quick-login-panel .panel-close {
+            position: absolute;
+            top: 10px;
+            right: 14px;
+            font-size: 1.2rem;
+            color: #aaa;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .quick-login-panel .panel-close:hover {
+            color: #666;
+        }
+        .role-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all .2s;
+            border: 1px solid #f0f0f0;
+        }
+        .role-card:hover {
+            background: #f8f9ff;
+            border-color: #667eea;
+            transform: translateX(4px);
+        }
+        .role-card:last-child {
+            margin-bottom: 0;
+        }
+        .role-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            color: #fff;
+            flex-shrink: 0;
+        }
+        .role-avatar.admin { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .role-avatar.keeper { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .role-avatar.checker { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .role-info .role-name {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #333;
+        }
+        .role-info .role-account {
+            font-size: 0.75rem;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <div class="login-icon">
+        <i class="bi bi-box-seam"></i>
+    </div>
+    <div class="login-title">物资到货入库管理系统</div>
+    <div class="login-subtitle">请登录后继续操作</div>
+
+    <div th:if="${param.error}" class="error-msg">
+        <i class="bi bi-exclamation-circle-fill"></i>
+        用户名或密码错误
+    </div>
+
+    <form action="/api/login" method="post">
+        <div class="mb-3">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                <input type="text" class="form-control" id="username" name="username" placeholder="用户名" required autofocus>
+            </div>
+        </div>
+        <div class="mb-4">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                <input type="password" class="form-control" id="password" name="password" placeholder="密码" required>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-login">
+            <i class="bi bi-box-arrow-in-right me-1"></i> 登 录
+        </button>
+    </form>
+</div>
+
+<!-- 小圆点 -->
+<div class="secret-dot" id="secretDot" title="快速登录"></div>
+
+<!-- 快速登录面板 -->
+<div class="quick-login-panel" id="quickPanel">
+    <div class="panel-close" id="panelClose">&times;</div>
+    <div class="panel-title"><i class="bi bi-lightning-charge-fill text-warning me-1"></i>快速登录</div>
+
+    <div class="role-card" data-user="admin" data-pass="admin123">
+        <div class="role-avatar admin"><i class="bi bi-shield-check"></i></div>
+        <div class="role-info">
+            <div class="role-name">系统管理员</div>
+            <div class="role-account">admin / admin123</div>
+        </div>
+    </div>
+
+    <div class="role-card" data-user="keeper" data-pass="keeper123">
+        <div class="role-avatar keeper"><i class="bi bi-box-seam"></i></div>
+        <div class="role-info">
+            <div class="role-name">管库员</div>
+            <div class="role-account">keeper / keeper123</div>
+        </div>
+    </div>
+
+    <div class="role-card" data-user="checker" data-pass="checker123">
+        <div class="role-avatar checker"><i class="bi bi-clipboard-check"></i></div>
+        <div class="role-info">
+            <div class="role-name">验收员</div>
+            <div class="role-account">checker / checker123</div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function() {
+    var dot = document.getElementById('secretDot');
+    var panel = document.getElementById('quickPanel');
+    var closeBtn = document.getElementById('panelClose');
+    var clickCount = 0;
+    var isVisible = false;
+
+    dot.addEventListener('click', function() {
+        clickCount++;
+        if (!isVisible && clickCount >= 3) {
+            panel.classList.add('show');
+            isVisible = true;
+            clickCount = 0;
+        } else if (isVisible && clickCount >= 3) {
+            panel.classList.remove('show');
+            isVisible = false;
+            clickCount = 0;
+        }
+    });
+
+    closeBtn.addEventListener('click', function() {
+        panel.classList.remove('show');
+        isVisible = false;
+        clickCount = 0;
+    });
+
+    // 点击角色卡片自动填充
+    document.querySelectorAll('.role-card').forEach(function(card) {
+        card.addEventListener('click', function() {
+            document.getElementById('username').value = this.dataset.user;
+            document.getElementById('password').value = this.dataset.pass;
+            panel.classList.remove('show');
+            isVisible = false;
+            clickCount = 0;
+        });
+    });
+})();
+</script>
+
+</body>
+</html>

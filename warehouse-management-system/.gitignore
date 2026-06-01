@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Desktop build outputs
+build/
+dist/
+*.spec.log
+
+# Java / Maven
+warehouse-web/target/
+*.class
+
+# Logs
+*.log
+logs/
+
+# Node / uni-app generated files
+node_modules/
+warehouse-uniapp/unpackage/
+
+# HBuilderX / Android signing and package outputs
+*.apk
+*.aab
+*.keystore
+certdata
+
+# Local environment and database dumps
+.env
+.env.*
+*.sql
+*.sqlite
+*.db
+~$*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

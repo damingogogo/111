@@ -2,6 +2,10 @@ node_modules/
 dist/
 unpackage/
 target/
+build/
+outputs/
+__pycache__/
+*.egg-info/
 mobile-uniapp-cli-backup/
 .idea/
 .vscode/
@@ -9,3 +13,7 @@ mobile-uniapp-cli-backup/
 .env.*
 !.env.example
 *.log
+*.apk
+*.aab
+*.keystore
+~$*
