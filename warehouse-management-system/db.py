@@ -42,6 +42,10 @@ def init_database():
                 "DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
             )
         conn.commit()
+    except Exception:
+        # 部署环境常用受限账号，仅允许操作 warehouse_mgmt 库；
+        # 数据库已存在时没有 CREATE DATABASE 权限也可以继续。
+        pass
     finally:
         conn.close()
 

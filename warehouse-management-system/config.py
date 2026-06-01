@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """数据库与系统配置"""
+import os
 
 DB_CONFIG = {
-    "host": "119.29.152.180",
-    "port": 3307,
-    "user": "root",
-    "password": "QWERqwer123456@@",
+    "host": os.getenv("WAREHOUSE_DB_HOST", "45.207.193.78"),
+    "port": int(os.getenv("WAREHOUSE_DB_PORT", "3306")),
+    "user": os.getenv("WAREHOUSE_DB_USER", "warehouse_user"),
+    "password": os.getenv("WAREHOUSE_DB_PASSWORD", "Warehouse@2026"),
     "charset": "utf8mb4",
     "connect_timeout": 3,
     "read_timeout": 5,

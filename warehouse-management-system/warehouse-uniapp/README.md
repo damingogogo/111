@@ -3,7 +3,7 @@
 ## 使用方式
 
 1. 用 HBuilderX 打开本目录：`warehouse-uniapp`。
-2. 当前 `common/config.js` 已配置线上后端：`http://38.76.214.13:9000`。
+2. 当前 `common/config.js` 已配置线上后端：`http://45.207.193.78:9000`。
 3. 后端需要使用本次更新后的 `warehouse-web`，移动端登录接口为 `POST /api/mobile/login`。
 4. 默认账号：`admin / admin123`、`keeper / keeper123`、`keeper2 / keeper123`、`keeper3 / keeper123`、`checker / checker123`。
 

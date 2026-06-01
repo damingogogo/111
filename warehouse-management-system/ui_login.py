@@ -5,6 +5,7 @@ import ttkbootstrap as ttkb
 from ttkbootstrap.dialogs import Messagebox
 import hashlib
 import hmac
+import threading
 import db
 from config import FONT_FAMILY
 
@@ -18,6 +19,7 @@ class LoginWindow(ttkb.Toplevel):
     def __init__(self, master, on_login_success):
         super().__init__(master)
         self.on_login_success = on_login_success
+        self._busy = False
         self.title("登录 - 物资到货入库管理系统")
         self.geometry("420x520")
         self.resizable(False, False)
@@ -138,10 +140,12 @@ class LoginWindow(ttkb.Toplevel):
         return hmac.compare_digest(expected, stored)
 
     def _do_action(self):
+        if self._busy:
+            return
         u = self.username_var.get().strip()
         p = self.password_var.get().strip()
         if not u or not p:
-            Messagebox.show_warning("用户名和密码不能为空", "提示")
+            Messagebox.show_warning("用户名和密码不能为空", "提示", parent=self)
             return
 
         if self.mode == "login":
@@ -150,60 +154,97 @@ class LoginWindow(ttkb.Toplevel):
             p2 = self.confirm_var.get().strip()
             name = self.name_var.get().strip()
             if p != p2:
-                Messagebox.show_warning("两次输入的密码不一致", "提示")
+                Messagebox.show_warning("两次输入的密码不一致", "提示", parent=self)
                 return
             if not name:
-                Messagebox.show_warning("请输入姓名", "提示")
+                Messagebox.show_warning("请输入姓名", "提示", parent=self)
                 return
             self._do_register(u, p, name)
 
+    def _set_busy(self, busy, text=None):
+        self._busy = busy
+        state = "disabled" if busy else "normal"
+        self.action_btn.configure(state=state)
+        if text:
+            self.action_btn.configure(text=text)
+        elif not busy:
+            self.action_btn.configure(text="登 录" if self.mode == "login" else "注 册")
+        self.update_idletasks()
+
+    def _run_background(self, work, done, busy_text):
+        self._set_busy(True, busy_text)
+
+        def runner():
+            try:
+                result = work()
+                error = None
+            except Exception as exc:
+                result = None
+                error = exc
+            self.after(0, lambda: done(result, error))
+
+        threading.Thread(target=runner, daemon=True).start()
+
     def _do_login(self, username, password):
-        try:
+        def work():
             user = db.find_user_by_username(username)
-        except Exception as e:
-            Messagebox.show_error(f"数据库查询失败:\n{e}", "错误")
-            return
-        if not user:
-            Messagebox.show_error("用户名不存在", "登录失败")
-            return
-        if not self._check_password(password, user["password"]):
-            Messagebox.show_error("密码错误", "登录失败")
-            return
-        if user.get("status") != 1:
-            Messagebox.show_error("该用户已被禁用", "登录失败")
-            return
-        self.on_login_success({
-            "id": user["id"],
-            "username": user["username"],
-            "real_name": user.get("real_name", ""),
-            "role": user.get("role", "KEEPER"),
-        })
-        self.destroy()
+            if not user:
+                return {"error": "用户名不存在"}
+            if not self._check_password(password, user["password"]):
+                return {"error": "密码错误"}
+            if user.get("status") != 1:
+                return {"error": "该用户已被禁用"}
+            return {"user": user}
+
+        def done(result, error):
+            self._set_busy(False)
+            if error:
+                Messagebox.show_error(f"数据库查询失败:\n{error}", "错误", parent=self)
+                return
+            if result.get("error"):
+                Messagebox.show_error(result["error"], "登录失败", parent=self)
+                return
+            user = result["user"]
+            self.on_login_success({
+                "id": user["id"],
+                "username": user["username"],
+                "real_name": user.get("real_name", ""),
+                "role": user.get("role", "KEEPER"),
+            })
+            self.destroy()
+
+        self._run_background(work, done, "登录中...")
 
     def _do_register(self, username, password, real_name):
         if len(username) < 3:
-            Messagebox.show_warning("用户名至少3个字符", "提示")
+            Messagebox.show_warning("用户名至少3个字符", "提示", parent=self)
             return
         if len(password) < 6:
-            Messagebox.show_warning("密码至少6位", "提示")
+            Messagebox.show_warning("密码至少6位", "提示", parent=self)
             return
-        try:
+
+        def work():
             existing = db.find_user_by_username(username)
-        except Exception as e:
-            Messagebox.show_error(f"数据库查询失败:\n{e}", "错误")
-            return
-        if existing:
-            Messagebox.show_warning("该用户名已被注册", "提示")
-            return
-        try:
+            if existing:
+                return {"error": "该用户名已被注册"}
             db.add_user(username, self._hash(password), real_name, "KEEPER")
-            Messagebox.show_info("注册成功，请登录", "提示")
+            return {"ok": True}
+
+        def done(result, error):
+            self._set_busy(False)
+            if error:
+                Messagebox.show_error(f"注册失败:\n{error}", "错误", parent=self)
+                return
+            if result.get("error"):
+                Messagebox.show_warning(result["error"], "提示", parent=self)
+                return
+            Messagebox.show_info("注册成功，请登录", "提示", parent=self)
             self._toggle_mode()
             self.username_var.delete(0, "end")
             self.password_var.delete(0, "end")
             self.username_var.focus_set()
-        except Exception as e:
-            Messagebox.show_error(f"注册失败:\n{e}", "错误")
+
+        self._run_background(work, done, "注册中...")
 
     def _on_close(self):
         self.master.destroy()

@@ -3,9 +3,9 @@ server:
 
 spring:
   datasource:
-    url: ${DB_URL:jdbc:mysql://127.0.0.1:3306/warehouse_mgmt?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
+    url: ${DB_URL:jdbc:mysql://45.207.193.78:3306/warehouse_mgmt?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
     username: ${DB_USERNAME:warehouse_user}
-    password: ${DB_PASSWORD:}
+    password: ${DB_PASSWORD:Warehouse@2026}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   thymeleaf:
