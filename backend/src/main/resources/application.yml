@@ -1,0 +1,29 @@
+server:
+  port: 18763
+
+spring:
+  application:
+    name: emotion-ai
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${MYSQL_URL:jdbc:mysql://localhost:3306/emotion_ai?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false}
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:123456}
+  flyway:
+    enabled: true
+    encoding: UTF-8
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 40MB
+
+app:
+  minio:
+    endpoint: ${MINIO_ENDPOINT:http://119.29.152.180:9000}
+    access-key: ${MINIO_ACCESS_KEY:minioadmin}
+    secret-key: ${MINIO_SECRET_KEY:minioadmin}
+    bucket: ${MINIO_BUCKET:deng}
+    public-base-url: ${MINIO_PUBLIC_BASE_URL:http://119.29.152.180:9000/deng}

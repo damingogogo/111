@@ -1,0 +1,11 @@
+node_modules/
+dist/
+unpackage/
+target/
+mobile-uniapp-cli-backup/
+.idea/
+.vscode/
+.env
+.env.*
+!.env.example
+*.log

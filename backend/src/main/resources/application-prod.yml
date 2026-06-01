@@ -1,0 +1,6 @@
+spring:
+  flyway:
+    enabled: true
+
+# Production profile keeps versioned migrations enabled and avoids legacy SQL init.
+# Start with: mvn spring-boot:run -Dspring-boot.run.profiles=prod

@@ -1,0 +1,99 @@
+{
+  "pages": [
+    {
+      "path": "pages/login/login",
+      "style": {
+        "navigationBarTitleText": "账号激活"
+      }
+    },
+    {
+      "path": "pages/home/home",
+      "style": {
+        "navigationBarTitleText": "情绪支持",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/assessment/assessment",
+      "style": {
+        "navigationBarTitleText": "AI 筛查"
+      }
+    },
+    {
+      "path": "pages/course/course",
+      "style": {
+        "navigationBarTitleText": "职场适应课程"
+      }
+    },
+    {
+      "path": "pages/consult/consult",
+      "style": {
+        "navigationBarTitleText": "心理咨询"
+      }
+    },
+    {
+      "path": "pages/mood/mood",
+      "style": {
+        "navigationBarTitleText": "我的状态"
+      }
+    },
+    {
+      "path": "pages/profile/profile",
+      "style": {
+        "navigationBarTitleText": "我的报告"
+      }
+    },
+    {
+      "path": "pages/course/detail",
+      "style": {
+        "navigationBarTitleText": "课程详情"
+      }
+    },
+    {
+      "path": "pages/profile/report-detail",
+      "style": {
+        "navigationBarTitleText": "报告详情"
+      }
+    },
+    {
+      "path": "pages/policy/policy",
+      "style": {
+        "navigationBarTitleText": "政策中心"
+      }
+    }
+  ],
+  "tabBar": {
+    "color": "#7a8299",
+    "selectedColor": "#3f72f5",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/home/home",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/assessment/assessment",
+        "text": "筛查"
+      },
+      {
+        "pagePath": "pages/course/course",
+        "text": "课程"
+      },
+      {
+        "pagePath": "pages/consult/consult",
+        "text": "咨询"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的"
+      }
+    ]
+  },
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "返岗情绪支持",
+    "navigationBarBackgroundColor": "#f7fbff",
+    "backgroundColor": "#f7fbff"
+  }
+}
