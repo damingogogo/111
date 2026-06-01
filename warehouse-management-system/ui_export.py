@@ -104,6 +104,10 @@ class ExportTab(ttkb.Frame):
                     command=self._export_arrivals).pack(side="left")
         ttkb.Button(r2, text="导出物资基础数据", bootstyle="success-outline",
                     command=self._export_materials).pack(side="left", padx=10)
+        ttkb.Button(r2, text="导出入库情况表", bootstyle="info",
+                    command=self._export_inbound_status).pack(side="left")
+        ttkb.Button(r2, text="导出订单引用表", bootstyle="info-outline",
+                    command=self._export_reference_status).pack(side="left", padx=10)
 
         # 预览列表
         list_card = Card(self, text="预览", padding=8)
@@ -205,6 +209,38 @@ class ExportTab(ttkb.Frame):
         try:
             rows = db.list_materials("")
             excel_io.export_materials(path, rows)
+            Messagebox.show_info(f"已导出 {len(rows)} 条到:\n{path}", "成功")
+        except Exception as e:
+            Messagebox.show_error(str(e), "失败")
+
+    def _export_inbound_status(self):
+        path = filedialog.asksaveasfilename(
+            title="导出已到货物资入库情况表",
+            defaultextension=".xlsx",
+            initialfile="已到货物资入库情况表.xlsx",
+            filetypes=[("Excel 文件", "*.xlsx")],
+        )
+        if not path:
+            return
+        try:
+            rows = db.inbound_status_report()
+            excel_io.export_inbound_status(path, rows)
+            Messagebox.show_info(f"已导出 {len(rows)} 条到:\n{path}", "成功")
+        except Exception as e:
+            Messagebox.show_error(str(e), "失败")
+
+    def _export_reference_status(self):
+        path = filedialog.asksaveasfilename(
+            title="导出采购订单引用情况表",
+            defaultextension=".xlsx",
+            initialfile="采购订单引用情况表.xlsx",
+            filetypes=[("Excel 文件", "*.xlsx")],
+        )
+        if not path:
+            return
+        try:
+            rows = db.purchase_order_reference_report()
+            excel_io.export_purchase_order_reference(path, rows)
             Messagebox.show_info(f"已导出 {len(rows)} 条到:\n{path}", "成功")
         except Exception as e:
             Messagebox.show_error(str(e), "失败")

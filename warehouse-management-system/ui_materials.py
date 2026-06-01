@@ -56,6 +56,8 @@ class MaterialsTab(ttkb.Frame):
 
         ttkb.Button(row, text="Excel 导入", bootstyle="warning",
                     command=self._import).pack(side="left")
+        ttkb.Button(row, text="采购订单导入", bootstyle="warning",
+                    command=self._import_purchase_orders).pack(side="left", padx=(4, 0))
         ttkb.Button(row, text="下载模板", bootstyle="warning-outline",
                     command=self._gen_template).pack(side="left", padx=4)
         ttkb.Button(row, text="全部导出", bootstyle="primary-outline",
@@ -165,6 +167,30 @@ class MaterialsTab(ttkb.Frame):
             Messagebox.show_info(f"模板已生成:\n{path}", "成功")
         except Exception as e:
             Messagebox.show_error(str(e), "失败")
+
+    def _import_purchase_orders(self):
+        path = filedialog.askopenfilename(
+            title="选择采购订单综合查询信息 Excel",
+            filetypes=[("Excel 文件", "*.xlsx *.xls"), ("所有文件", "*.*")],
+        )
+        if not path:
+            return
+        try:
+            show_busy(self, True)
+            rows = excel_io.import_purchase_orders_from_excel(path)
+            if not rows:
+                Messagebox.show_info("Excel 中没有有效采购订单数据", "提示")
+                return
+            ins, upd = db.upsert_purchase_orders_batch(rows)
+            Messagebox.show_info(
+                f"采购订单导入完成：新增 {ins} 条，更新 {upd} 条；物资档案已同步。",
+                "导入完成",
+            )
+            self.refresh()
+        except Exception as e:
+            Messagebox.show_error(str(e), "采购订单导入失败")
+        finally:
+            show_busy(self, False)
 
     def _export_all(self):
         path = filedialog.asksaveasfilename(

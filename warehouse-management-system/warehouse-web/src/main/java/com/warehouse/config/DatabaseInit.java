@@ -47,6 +47,8 @@ public class DatabaseInit {
             "    name VARCHAR(255) DEFAULT '' COMMENT '名称(快照)',\n" +
             "    model VARCHAR(255) DEFAULT '' COMMENT '型号',\n" +
             "    unit VARCHAR(32) DEFAULT '' COMMENT '单位',\n" +
+            "    purchase_order_no VARCHAR(128) DEFAULT '' COMMENT '采购订单号',\n" +
+            "    purchase_order_line VARCHAR(64) DEFAULT '' COMMENT '采购订单行号',\n" +
             "    `source` VARCHAR(255) DEFAULT '' COMMENT '来源',\n" +
             "    supplier VARCHAR(255) DEFAULT '' COMMENT '供应商',\n" +
             "    waybill_no VARCHAR(128) DEFAULT '' COMMENT '运单号',\n" +
@@ -63,6 +65,7 @@ public class DatabaseInit {
             "    remark VARCHAR(500) DEFAULT '' COMMENT '备注',\n" +
             "    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n" +
             "    INDEX idx_code (material_code),\n" +
+            "    INDEX idx_purchase_order (purchase_order_no, purchase_order_line),\n" +
             "    INDEX idx_status (status),\n" +
             "    INDEX idx_supplier (supplier),\n" +
             "    INDEX idx_keeper (warehouse_keeper),\n" +
@@ -70,6 +73,30 @@ public class DatabaseInit {
             ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='到货登记与入库管理'"
         );
 
+        jdbcTemplate.execute(
+            "CREATE TABLE IF NOT EXISTS purchase_orders (\n" +
+            "    id INT AUTO_INCREMENT PRIMARY KEY,\n" +
+            "    order_no VARCHAR(128) NOT NULL COMMENT '采购订单号',\n" +
+            "    order_line VARCHAR(64) DEFAULT '' COMMENT '行号',\n" +
+            "    material_code VARCHAR(64) NOT NULL COMMENT '物资编码',\n" +
+            "    name VARCHAR(255) DEFAULT '' COMMENT '名称',\n" +
+            "    model VARCHAR(255) DEFAULT '' COMMENT '型号',\n" +
+            "    unit VARCHAR(32) DEFAULT '' COMMENT '单位',\n" +
+            "    supplier VARCHAR(255) DEFAULT '' COMMENT '供应商',\n" +
+            "    order_quantity DECIMAL(18,3) DEFAULT 0 COMMENT '订单数量',\n" +
+            "    order_date VARCHAR(64) DEFAULT '' COMMENT '订单日期',\n" +
+            "    delivery_date VARCHAR(64) DEFAULT '' COMMENT '交货日期',\n" +
+            "    remark VARCHAR(500) DEFAULT '' COMMENT '备注',\n" +
+            "    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n" +
+            "    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n" +
+            "    UNIQUE KEY uk_order_line_material (order_no, order_line, material_code),\n" +
+            "    INDEX idx_po_material (material_code),\n" +
+            "    INDEX idx_po_supplier (supplier)\n" +
+            ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='采购订单基础数据'"
+        );
+
+        addColumnIfMissing("arrivals", "purchase_order_no", "purchase_order_no VARCHAR(128) DEFAULT '' COMMENT '采购订单号' AFTER unit");
+        addColumnIfMissing("arrivals", "purchase_order_line", "purchase_order_line VARCHAR(64) DEFAULT '' COMMENT '采购订单行号' AFTER purchase_order_no");
         addColumnIfMissing("arrivals", "source", "`source` VARCHAR(255) DEFAULT '' COMMENT '来源' AFTER unit");
         addColumnIfMissing("arrivals", "waybill_no", "waybill_no VARCHAR(128) DEFAULT '' COMMENT '运单号' AFTER supplier");
         addColumnIfMissing("arrivals", "packaging", "packaging VARCHAR(255) DEFAULT '' COMMENT '包装' AFTER arrival_quantity");

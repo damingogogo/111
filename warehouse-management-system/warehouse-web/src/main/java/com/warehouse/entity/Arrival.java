@@ -12,6 +12,8 @@ public class Arrival {
     private String name;
     private String model;
     private String unit;
+    private String purchaseOrderNo;
+    private String purchaseOrderLine;
     private String source;
     private String supplier;
     private String waybillNo;

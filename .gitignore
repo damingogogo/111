@@ -17,3 +17,8 @@ mobile-uniapp-cli-backup/
 *.aab
 *.keystore
 ~$*
+
+# Local synced working copies for HBuilderX/server packaging.
+# The tracked backup project lives under warehouse-management-system/.
+/warehouse-uniapp/
+/warehouse-web/

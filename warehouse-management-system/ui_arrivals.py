@@ -14,11 +14,11 @@ from ui_common import (
 from config import FONT_FAMILY
 
 
-COLUMNS = ("id", "material_code", "name", "model", "unit", "supplier",
+COLUMNS = ("id", "purchase_order_no", "material_code", "name", "model", "unit", "supplier",
            "arrival_quantity", "package_count", "weight", "status", "arrival_time")
-HEADINGS = ("ID", "编码", "名称", "型号", "单位", "供应商",
+HEADINGS = ("ID", "采购订单", "编码", "名称", "型号", "单位", "供应商",
             "到货数量", "件数", "重量", "状态", "登记时间")
-WIDTHS = (50, 110, 180, 110, 60, 130, 80, 60, 80, 70, 140)
+WIDTHS = (50, 120, 110, 170, 100, 60, 120, 80, 60, 80, 70, 140)
 
 
 class ArrivalsTab(ttkb.Frame):
@@ -66,12 +66,28 @@ class ArrivalsTab(ttkb.Frame):
         self.unit_le.pack(side="left", padx=(12, 0))
         self.supplier_co = LabeledCombo(row2, "供应商", width=22, label_width=8)
         self.supplier_co.pack(side="left", padx=(12, 0), fill="x", expand=True)
+        self.supplier_co.combo.bind("<FocusOut>", lambda _e: self._match_order(silent=True))
 
-        # 第三行：数量 + 件数 + 重量 + 备注
+        row2b = ttkb.Frame(form)
+        row2b.pack(fill="x", pady=4)
+        self.po_no_le = LabeledEntry(row2b, "采购订单号", width=20, label_width=10)
+        self.po_no_le.pack(side="left")
+        self.po_line_le = LabeledEntry(row2b, "行号", width=8, label_width=6)
+        self.po_line_le.pack(side="left", padx=(12, 0))
+        ttkb.Button(row2b, text="自动匹配订单", bootstyle="info-outline",
+                    command=lambda: self._match_order(silent=False)).pack(side="left", padx=8)
+        self.source_le = LabeledEntry(row2b, "来源", width=18, label_width=6)
+        self.source_le.pack(side="left", padx=(12, 0), fill="x", expand=True)
+        self.waybill_le = LabeledEntry(row2b, "运单号", width=18, label_width=8)
+        self.waybill_le.pack(side="left", padx=(12, 0))
+
+        # 第三行：数量 + 包装 + 件数 + 重量 + 备注
         row3 = ttkb.Frame(form)
         row3.pack(fill="x", pady=4)
         self.qty_le = LabeledEntry(row3, "到货数量*", width=10, label_width=10)
         self.qty_le.pack(side="left")
+        self.packaging_le = LabeledEntry(row3, "包装", width=12, label_width=6)
+        self.packaging_le.pack(side="left", padx=(12, 0))
         self.pack_le = LabeledEntry(row3, "件数", width=8, label_width=6)
         self.pack_le.pack(side="left", padx=(12, 0))
         self.weight_le = LabeledEntry(row3, "重量", width=10, label_width=6)
@@ -131,7 +147,7 @@ class ArrivalsTab(ttkb.Frame):
         self.tree_widget.insert_rows(
             rows,
             value_fn=lambda r: (
-                r["id"], r["material_code"], r["name"], r["model"] or "",
+                r["id"], r.get("purchase_order_no") or "", r["material_code"], r["name"], r["model"] or "",
                 r["unit"] or "", r["supplier"] or "",
                 r["arrival_quantity"], r["package_count"], r["weight"],
                 r["status"],
@@ -159,6 +175,7 @@ class ArrivalsTab(ttkb.Frame):
             self.name_le.set(mat["name"])
             self.model_le.set(mat.get("model") or "")
             self.unit_le.set(mat.get("unit") or "")
+            self._match_order(silent=True)
         else:
             self.name_le.set("")
             self.model_le.set("")
@@ -200,8 +217,13 @@ class ArrivalsTab(ttkb.Frame):
             "name": self.name_le.get(),
             "model": self.model_le.get(),
             "unit": self.unit_le.get(),
+            "purchase_order_no": self.po_no_le.get(),
+            "purchase_order_line": self.po_line_le.get(),
+            "source": self.source_le.get(),
             "supplier": self.supplier_co.get(),
+            "waybill_no": self.waybill_le.get(),
             "arrival_quantity": qty,
+            "packaging": self.packaging_le.get(),
             "package_count": pack,
             "weight": weight,
             "remark": self.remark_le.get(),
@@ -221,11 +243,43 @@ class ArrivalsTab(ttkb.Frame):
         self.name_le.set("")
         self.model_le.set("")
         self.unit_le.set("")
+        self.po_no_le.set("")
+        self.po_line_le.set("")
+        self.source_le.set("")
         self.supplier_co.set("")
+        self.waybill_le.set("")
         self.qty_le.set("")
+        self.packaging_le.set("")
         self.pack_le.set("")
         self.weight_le.set("")
         self.remark_le.set("")
+
+    def _match_order(self, silent=True):
+        code = self.code_var.get().strip()
+        if not code or self.po_no_le.get().strip():
+            return
+        try:
+            po = db.match_purchase_order(code, self.supplier_co.get())
+        except Exception as e:
+            if not silent:
+                Messagebox.show_error(str(e), "匹配失败")
+            return
+        if not po:
+            if not silent:
+                Messagebox.show_info("未找到该物资可引用的采购订单", "提示")
+            return
+        self.po_no_le.set(po.get("order_no") or "")
+        self.po_line_le.set(po.get("order_line") or "")
+        if not self.supplier_co.get():
+            self.supplier_co.set(po.get("supplier") or "")
+        if not self.name_le.get():
+            self.name_le.set(po.get("name") or "")
+        if not self.model_le.get():
+            self.model_le.set(po.get("model") or "")
+        if not self.unit_le.get():
+            self.unit_le.set(po.get("unit") or "")
+        if not silent:
+            self.status_callback(f"已匹配采购订单: {po.get('order_no') or ''}")
 
     # ---------- Excel ----------
     def _import(self):

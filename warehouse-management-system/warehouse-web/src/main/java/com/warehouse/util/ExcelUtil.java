@@ -2,6 +2,7 @@ package com.warehouse.util;
 
 import com.warehouse.entity.Arrival;
 import com.warehouse.entity.Material;
+import com.warehouse.entity.PurchaseOrder;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -14,14 +15,21 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ExcelUtil {
 
     private static final String[] MATERIAL_HEADERS = {"物资编码", "名称", "型号", "单位", "备注"};
-    private static final String[] ARRIVAL_HEADERS = {"物资编码", "名称", "型号", "单位", "来源", "供应商", "运单号",
+    private static final String[] PURCHASE_ORDER_HEADERS = {"采购订单号", "行号", "物资编码", "名称", "型号", "单位",
+            "供应商", "订单数量", "订单日期", "交货日期", "备注"};
+    private static final String[] ARRIVAL_HEADERS = {"采购订单号", "行号", "物资编码", "名称", "型号", "单位", "来源", "供应商", "运单号",
             "到货数量", "包装", "件数", "重量", "管库员", "验收完成时间", "上架时间", "入库单号", "到货登记时间", "状态", "备注"};
+    private static final String[] INBOUND_HEADERS = {"采购订单号", "行号", "物资编码", "名称", "型号", "单位", "供应商",
+            "订单数量", "到货数量", "已入库数量", "未入库数量", "入库状态"};
+    private static final String[] REFERENCE_HEADERS = {"采购订单号", "行号", "物资编码", "名称", "型号", "单位", "供应商",
+            "订单数量", "引用数量", "未引用数量", "引用状态"};
 
     private static CellStyle headerStyle(Workbook wb) {
         CellStyle style = wb.createCellStyle();
@@ -76,6 +84,62 @@ public class ExcelUtil {
         cell.setCellStyle(style);
     }
 
+    private static String normalizeHeader(String value) {
+        if (value == null) return "";
+        return value.trim()
+                .replace(" ", "")
+                .replace("　", "")
+                .replace("\n", "")
+                .replace("\r", "")
+                .replace("（", "")
+                .replace("）", "")
+                .replace("(", "")
+                .replace(")", "")
+                .replace(":", "")
+                .replace("：", "")
+                .toLowerCase();
+    }
+
+    private static Map<String, Integer> readHeaderMap(Row headerRow, Map<String, String[]> aliases) {
+        Map<String, Integer> result = new HashMap<>();
+        if (headerRow == null) return result;
+        Map<String, String> aliasToField = new HashMap<>();
+        for (Map.Entry<String, String[]> entry : aliases.entrySet()) {
+            aliasToField.put(normalizeHeader(entry.getKey()), entry.getKey());
+            for (String alias : entry.getValue()) {
+                aliasToField.put(normalizeHeader(alias), entry.getKey());
+            }
+        }
+        for (Cell cell : headerRow) {
+            String field = aliasToField.get(normalizeHeader(getCellString(cell)));
+            if (field != null) {
+                result.put(field, cell.getColumnIndex());
+            }
+        }
+        return result;
+    }
+
+    private static Map<String, String[]> purchaseOrderAliases() {
+        Map<String, String[]> aliases = new HashMap<>();
+        aliases.put("orderNo", new String[]{"采购订单号", "采购订单", "订单号", "采购单号", "合同号", "单据编号"});
+        aliases.put("orderLine", new String[]{"行号", "行项目", "订单行号", "项目号", "序号"});
+        aliases.put("materialCode", new String[]{"物资编码", "物料编码", "物料号", "物资编号", "物料编号", "编码"});
+        aliases.put("name", new String[]{"名称", "物资名称", "物料名称", "物料描述", "品名", "产品名称"});
+        aliases.put("model", new String[]{"型号", "规格型号", "规格", "型号规格"});
+        aliases.put("unit", new String[]{"单位", "计量单位", "采购单位"});
+        aliases.put("supplier", new String[]{"供应商", "供应商名称", "供货单位"});
+        aliases.put("orderQuantity", new String[]{"订单数量", "采购数量", "数量", "订单量", "订货数量"});
+        aliases.put("orderDate", new String[]{"订单日期", "采购日期", "下单日期", "制单日期"});
+        aliases.put("deliveryDate", new String[]{"交货日期", "计划交货日期", "到货日期", "需求日期"});
+        aliases.put("remark", new String[]{"备注", "说明"});
+        return aliases;
+    }
+
+    private static String value(Row row, Map<String, Integer> colMap, String field) {
+        Integer idx = colMap.get(field);
+        return idx == null ? "" : getCellString(row.getCell(idx));
+    }
+
     // ============ 模板 ============
 
     public static void writeMaterialTemplate(OutputStream out) throws IOException {
@@ -116,24 +180,26 @@ public class ExcelUtil {
 
         CellStyle body = bodyStyle(wb);
         Row r1 = sheet.createRow(1);
-        writeBodyCell(r1, 0, "WZ-0001", body);
-        writeBodyCell(r1, 1, "镀锌钢管", body);
-        writeBodyCell(r1, 2, "DN50", body);
-        writeBodyCell(r1, 3, "米", body);
-        writeBodyCell(r1, 4, "项目现场", body);
-        writeBodyCell(r1, 5, "示例供应商", body);
-        writeBodyCell(r1, 6, "SF123456789", body);
-        writeBodyCell(r1, 7, 100, body);
-        writeBodyCell(r1, 8, "纸箱", body);
-        writeBodyCell(r1, 9, 5, body);
-        writeBodyCell(r1, 10, 320, body);
-        writeBodyCell(r1, 11, "", body);
-        writeBodyCell(r1, 12, "", body);
+        writeBodyCell(r1, 0, "PO-0001", body);
+        writeBodyCell(r1, 1, "10", body);
+        writeBodyCell(r1, 2, "WZ-0001", body);
+        writeBodyCell(r1, 3, "镀锌钢管", body);
+        writeBodyCell(r1, 4, "DN50", body);
+        writeBodyCell(r1, 5, "米", body);
+        writeBodyCell(r1, 6, "项目现场", body);
+        writeBodyCell(r1, 7, "示例供应商", body);
+        writeBodyCell(r1, 8, "SF123456789", body);
+        writeBodyCell(r1, 9, 100, body);
+        writeBodyCell(r1, 10, "纸箱", body);
+        writeBodyCell(r1, 11, 5, body);
+        writeBodyCell(r1, 12, 320, body);
         writeBodyCell(r1, 13, "", body);
         writeBodyCell(r1, 14, "", body);
         writeBodyCell(r1, 15, "", body);
-        writeBodyCell(r1, 16, "待认领", body);
-        writeBodyCell(r1, 17, "示例", body);
+        writeBodyCell(r1, 16, "", body);
+        writeBodyCell(r1, 17, "", body);
+        writeBodyCell(r1, 18, "待认领", body);
+        writeBodyCell(r1, 19, "示例", body);
 
         for (int i = 0; i < ARRIVAL_HEADERS.length; i++) {
             sheet.setColumnWidth(i, 16);
@@ -181,6 +247,43 @@ public class ExcelUtil {
         return list;
     }
 
+    public static List<PurchaseOrder> readPurchaseOrders(InputStream in) throws IOException {
+        Workbook wb = new XSSFWorkbook(in);
+        Sheet sheet = wb.getSheetAt(0);
+        List<PurchaseOrder> list = new ArrayList<>();
+        Map<String, Integer> colMap = readHeaderMap(sheet.getRow(0), purchaseOrderAliases());
+        if (!colMap.containsKey("orderNo") || !colMap.containsKey("materialCode")) {
+            wb.close();
+            throw new IllegalArgumentException("Excel缺少必填列「采购订单号」或「物资编码」");
+        }
+        if (!colMap.containsKey("orderQuantity")) {
+            wb.close();
+            throw new IllegalArgumentException("Excel缺少数量列，请确认表头包含「订单数量 / 采购数量 / 数量」");
+        }
+        for (int r = 1; r <= sheet.getLastRowNum(); r++) {
+            Row row = sheet.getRow(r);
+            if (row == null) continue;
+            String orderNo = value(row, colMap, "orderNo");
+            String code = value(row, colMap, "materialCode");
+            if (orderNo == null || orderNo.trim().isEmpty() || code == null || code.trim().isEmpty()) continue;
+            PurchaseOrder order = new PurchaseOrder();
+            order.setOrderNo(orderNo.trim());
+            order.setOrderLine(value(row, colMap, "orderLine"));
+            order.setMaterialCode(code.trim());
+            order.setName(value(row, colMap, "name"));
+            order.setModel(value(row, colMap, "model"));
+            order.setUnit(value(row, colMap, "unit"));
+            order.setSupplier(value(row, colMap, "supplier"));
+            order.setOrderQuantity(getCellBigDecimal(row.getCell(colMap.get("orderQuantity"))));
+            order.setOrderDate(value(row, colMap, "orderDate"));
+            order.setDeliveryDate(value(row, colMap, "deliveryDate"));
+            order.setRemark(value(row, colMap, "remark"));
+            list.add(order);
+        }
+        wb.close();
+        return list;
+    }
+
     public static List<Arrival> readArrivals(InputStream in) throws IOException {
         Workbook wb = new XSSFWorkbook(in);
         Sheet sheet = wb.getSheetAt(0);
@@ -206,6 +309,8 @@ public class ExcelUtil {
             String code = getCellString(row.getCell(codeIdx));
             if (code == null || code.trim().isEmpty()) continue;
             Arrival a = new Arrival();
+            a.setPurchaseOrderNo(getCellString(row.getCell(colMap.getOrDefault("采购订单号", -1))));
+            a.setPurchaseOrderLine(getCellString(row.getCell(colMap.getOrDefault("行号", -1))));
             a.setMaterialCode(code.trim());
             a.setName(getCellString(row.getCell(colMap.getOrDefault("名称", -1))));
             a.setModel(getCellString(row.getCell(colMap.getOrDefault("型号", -1))));
@@ -266,30 +371,83 @@ public class ExcelUtil {
         int rowIdx = 1;
         for (Arrival a : list) {
             Row row = sheet.createRow(rowIdx++);
-            writeBodyCell(row, 0, a.getMaterialCode(), body);
-            writeBodyCell(row, 1, a.getName(), body);
-            writeBodyCell(row, 2, a.getModel(), body);
-            writeBodyCell(row, 3, a.getUnit(), body);
-            writeBodyCell(row, 4, a.getSource(), body);
-            writeBodyCell(row, 5, a.getSupplier(), body);
-            writeBodyCell(row, 6, a.getWaybillNo(), body);
-            writeBodyCell(row, 7, a.getArrivalQuantity(), body);
-            writeBodyCell(row, 8, a.getPackaging(), body);
-            writeBodyCell(row, 9, a.getPackageCount(), body);
-            writeBodyCell(row, 10, a.getWeight(), body);
-            writeBodyCell(row, 11, a.getWarehouseKeeper(), body);
-            writeBodyCell(row, 12, a.getAcceptanceTime() != null ? a.getAcceptanceTime().format(dtf) : "", body);
-            writeBodyCell(row, 13, a.getShelvingTime() != null ? a.getShelvingTime().format(dtf) : "", body);
-            writeBodyCell(row, 14, a.getReceiptNumber(), body);
-            writeBodyCell(row, 15, a.getArrivalTime() != null ? a.getArrivalTime().format(dtf) : "", body);
-            writeBodyCell(row, 16, a.getStatus(), body);
-            writeBodyCell(row, 17, a.getRemark(), body);
+            writeBodyCell(row, 0, a.getPurchaseOrderNo(), body);
+            writeBodyCell(row, 1, a.getPurchaseOrderLine(), body);
+            writeBodyCell(row, 2, a.getMaterialCode(), body);
+            writeBodyCell(row, 3, a.getName(), body);
+            writeBodyCell(row, 4, a.getModel(), body);
+            writeBodyCell(row, 5, a.getUnit(), body);
+            writeBodyCell(row, 6, a.getSource(), body);
+            writeBodyCell(row, 7, a.getSupplier(), body);
+            writeBodyCell(row, 8, a.getWaybillNo(), body);
+            writeBodyCell(row, 9, a.getArrivalQuantity(), body);
+            writeBodyCell(row, 10, a.getPackaging(), body);
+            writeBodyCell(row, 11, a.getPackageCount(), body);
+            writeBodyCell(row, 12, a.getWeight(), body);
+            writeBodyCell(row, 13, a.getWarehouseKeeper(), body);
+            writeBodyCell(row, 14, a.getAcceptanceTime() != null ? a.getAcceptanceTime().format(dtf) : "", body);
+            writeBodyCell(row, 15, a.getShelvingTime() != null ? a.getShelvingTime().format(dtf) : "", body);
+            writeBodyCell(row, 16, a.getReceiptNumber(), body);
+            writeBodyCell(row, 17, a.getArrivalTime() != null ? a.getArrivalTime().format(dtf) : "", body);
+            writeBodyCell(row, 18, a.getStatus(), body);
+            writeBodyCell(row, 19, a.getRemark(), body);
         }
         for (int i = 0; i < ARRIVAL_HEADERS.length; i++) {
             sheet.setColumnWidth(i, 16);
         }
         wb.write(out);
         wb.close();
+    }
+
+    public static void writeInboundReport(List<Map<String, Object>> list, OutputStream out) throws IOException {
+        String[] fields = {"order_no", "order_line", "material_code", "name", "model", "unit", "supplier",
+                "order_quantity", "arrival_quantity", "stored_quantity", "not_stored_quantity", "inbound_status"};
+        writeMapRecords("已到货物资入库情况", INBOUND_HEADERS, fields, list, out);
+    }
+
+    public static void writeReferenceReport(List<Map<String, Object>> list, OutputStream out) throws IOException {
+        String[] fields = {"order_no", "order_line", "material_code", "name", "model", "unit", "supplier",
+                "order_quantity", "referenced_quantity", "unreferenced_quantity", "reference_status"};
+        writeMapRecords("采购订单引用情况", REFERENCE_HEADERS, fields, list, out);
+    }
+
+    private static void writeMapRecords(String sheetName, String[] headers, String[] fields,
+                                        List<Map<String, Object>> list, OutputStream out) throws IOException {
+        Workbook wb = new XSSFWorkbook();
+        Sheet sheet = wb.createSheet(sheetName);
+        Row headerRow = sheet.createRow(0);
+        headerRow.setHeightInPoints(28);
+        writeHeader(headerRow, headers, headerStyle(wb));
+        CellStyle body = bodyStyle(wb);
+        int rowIdx = 1;
+        for (Map<String, Object> item : list) {
+            Row row = sheet.createRow(rowIdx++);
+            for (int i = 0; i < fields.length; i++) {
+                writeBodyCell(row, i, mapValue(item, fields[i]), body);
+            }
+        }
+        for (int i = 0; i < headers.length; i++) {
+            sheet.setColumnWidth(i, 18);
+        }
+        wb.write(out);
+        wb.close();
+    }
+
+    private static Object mapValue(Map<String, Object> item, String field) {
+        if (item.containsKey(field)) return item.get(field);
+        StringBuilder camel = new StringBuilder();
+        boolean upperNext = false;
+        for (char ch : field.toCharArray()) {
+            if (ch == '_') {
+                upperNext = true;
+            } else if (upperNext) {
+                camel.append(Character.toUpperCase(ch));
+                upperNext = false;
+            } else {
+                camel.append(ch);
+            }
+        }
+        return item.get(camel.toString());
     }
 
     // ============ 工具方法 ============

@@ -1,6 +1,7 @@
 package com.warehouse.service;
 
 import com.warehouse.entity.Arrival;
+import com.warehouse.entity.PurchaseOrder;
 import com.warehouse.mapper.ArrivalMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,9 @@ public class ArrivalService {
 
     @Autowired
     private ArrivalMapper arrivalMapper;
+
+    @Autowired
+    private PurchaseOrderService purchaseOrderService;
 
     public List<Arrival> list(String keyword, String status, String supplier, String keeper,
                               String dateFrom, String dateTo, Integer limit) {
@@ -127,6 +131,8 @@ public class ArrivalService {
         if (a.getName() == null) a.setName("");
         if (a.getModel() == null) a.setModel("");
         if (a.getUnit() == null) a.setUnit("");
+        if (a.getPurchaseOrderNo() == null) a.setPurchaseOrderNo("");
+        if (a.getPurchaseOrderLine() == null) a.setPurchaseOrderLine("");
         if (a.getSource() == null) a.setSource("");
         if (a.getSupplier() == null) a.setSupplier("");
         if (a.getWaybillNo() == null) a.setWaybillNo("");
@@ -137,6 +143,17 @@ public class ArrivalService {
         if (a.getArrivalQuantity() == null) a.setArrivalQuantity(BigDecimal.ZERO);
         if (a.getPackageCount() == null) a.setPackageCount(0);
         if (a.getWeight() == null) a.setWeight(BigDecimal.ZERO);
+        if (a.getPurchaseOrderNo().trim().isEmpty()) {
+            PurchaseOrder po = purchaseOrderService.matchOpen(a.getMaterialCode(), a.getSupplier());
+            if (po != null) {
+                a.setPurchaseOrderNo(po.getOrderNo());
+                a.setPurchaseOrderLine(po.getOrderLine());
+                if (a.getName().isEmpty()) a.setName(po.getName());
+                if (a.getModel().isEmpty()) a.setModel(po.getModel());
+                if (a.getUnit().isEmpty()) a.setUnit(po.getUnit());
+                if (a.getSupplier().isEmpty()) a.setSupplier(po.getSupplier());
+            }
+        }
     }
 
     private String deriveStatus(Arrival existing, Arrival update) {

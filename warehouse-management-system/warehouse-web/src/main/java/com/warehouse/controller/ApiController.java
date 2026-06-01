@@ -2,8 +2,10 @@ package com.warehouse.controller;
 
 import com.warehouse.entity.Arrival;
 import com.warehouse.entity.Material;
+import com.warehouse.entity.PurchaseOrder;
 import com.warehouse.service.ArrivalService;
 import com.warehouse.service.MaterialService;
+import com.warehouse.service.PurchaseOrderService;
 import com.warehouse.util.ExcelUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -28,6 +30,9 @@ public class ApiController {
 
     @Autowired
     private ArrivalService arrivalService;
+
+    @Autowired
+    private PurchaseOrderService purchaseOrderService;
 
     // ================== 物资基础信息 ==================
 
@@ -83,6 +88,26 @@ public class ApiController {
         response.setHeader(HttpHeaders.CONTENT_DISPOSITION,
                 "attachment;filename=" + URLEncoder.encode("物资基础数据.xlsx", "UTF-8"));
         ExcelUtil.writeMaterials(list, response.getOutputStream());
+    }
+
+    // ================== 采购订单 ==================
+
+    @GetMapping("/purchase-orders")
+    public List<PurchaseOrder> listPurchaseOrders(@RequestParam(defaultValue = "") String keyword) {
+        return purchaseOrderService.list(keyword, 5000);
+    }
+
+    @PostMapping("/purchase-orders/import")
+    public ResponseEntity<?> importPurchaseOrders(@RequestParam("file") MultipartFile file) throws Exception {
+        List<PurchaseOrder> list = ExcelUtil.readPurchaseOrders(file.getInputStream());
+        int[] result = purchaseOrderService.batchUpsert(list);
+        return ResponseEntity.ok(Map.of("success", true, "inserted", result[0], "updated", result[1]));
+    }
+
+    @GetMapping("/purchase-orders/match")
+    public PurchaseOrder matchPurchaseOrder(@RequestParam(defaultValue = "") String materialCode,
+                                            @RequestParam(defaultValue = "") String supplier) {
+        return purchaseOrderService.matchOpen(materialCode, supplier);
     }
 
     // ================== 到货登记 ==================
@@ -205,6 +230,22 @@ public class ApiController {
         params.put("dateFrom", dateFrom);
         params.put("dateTo", dateTo);
         writeArrivalExport(params, response);
+    }
+
+    @GetMapping("/export/inbound-status")
+    public void exportInboundStatus(HttpServletResponse response) throws IOException {
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader(HttpHeaders.CONTENT_DISPOSITION,
+                "attachment;filename=" + URLEncoder.encode("已到货物资入库情况表.xlsx", "UTF-8"));
+        ExcelUtil.writeInboundReport(purchaseOrderService.inboundReport(), response.getOutputStream());
+    }
+
+    @GetMapping("/export/purchase-order-reference")
+    public void exportPurchaseOrderReference(HttpServletResponse response) throws IOException {
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader(HttpHeaders.CONTENT_DISPOSITION,
+                "attachment;filename=" + URLEncoder.encode("采购订单引用情况表.xlsx", "UTF-8"));
+        ExcelUtil.writeReferenceReport(purchaseOrderService.referenceReport(), response.getOutputStream());
     }
 
     private void writeArrivalExport(Map<String, String> params, HttpServletResponse response) throws IOException {

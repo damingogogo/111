@@ -23,8 +23,11 @@
 
     <view class="row row-wrap gap-sm mb-md">
       <button class="btn-ghost btn-sm" @tap="importMaterials">导入物资Excel</button>
+      <button class="btn-ghost btn-sm" @tap="importPurchaseOrders">导入采购订单</button>
       <button class="btn-ghost btn-sm" @tap="downloadTemplate">下载模板</button>
       <button class="btn-ghost btn-sm" @tap="exportMaterials">导出物资</button>
+      <button class="btn-ghost btn-sm" @tap="exportInboundStatus">导出入库情况</button>
+      <button class="btn-ghost btn-sm" @tap="exportReferenceStatus">导出订单引用</button>
     </view>
 
     <!-- 空状态 -->
@@ -104,11 +107,24 @@ export default {
       uni.showToast({ title: `新增${inserted} 更新${updated}`, icon: 'none' })
       this.loadData()
     },
+    async importPurchaseOrders() {
+      const result = await uploadExcel('/api/purchase-orders/import')
+      const inserted = result.inserted || 0
+      const updated = result.updated || 0
+      uni.showToast({ title: `订单新增${inserted} 更新${updated}`, icon: 'none' })
+      this.loadData()
+    },
     downloadTemplate() {
       downloadExcel('/api/materials/template')
     },
     exportMaterials() {
       downloadExcel('/api/materials/export', { keyword: this.keyword })
+    },
+    exportInboundStatus() {
+      downloadExcel('/api/export/inbound-status')
+    },
+    exportReferenceStatus() {
+      downloadExcel('/api/export/purchase-order-reference')
     },
     edit(item) {
       uni.setStorageSync('EDIT_MATERIAL', item)

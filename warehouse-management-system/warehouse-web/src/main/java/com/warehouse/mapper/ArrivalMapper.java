@@ -9,9 +9,9 @@ import java.util.Map;
 @Mapper
 public interface ArrivalMapper {
 
-    @Insert("INSERT INTO arrivals(material_code, name, model, unit, `source`, supplier, waybill_no, arrival_quantity, " +
+    @Insert("INSERT INTO arrivals(material_code, name, model, unit, purchase_order_no, purchase_order_line, `source`, supplier, waybill_no, arrival_quantity, " +
             "packaging, package_count, weight, remark, status) " +
-            "VALUES(#{materialCode}, #{name}, #{model}, #{unit}, #{source}, #{supplier}, #{waybillNo}, #{arrivalQuantity}, " +
+            "VALUES(#{materialCode}, #{name}, #{model}, #{unit}, #{purchaseOrderNo}, #{purchaseOrderLine}, #{source}, #{supplier}, #{waybillNo}, #{arrivalQuantity}, " +
             "#{packaging}, #{packageCount}, #{weight}, #{remark}, '待认领')")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(Arrival arrival);
@@ -19,7 +19,7 @@ public interface ArrivalMapper {
     @Select("<script>" +
             "SELECT * FROM arrivals WHERE 1=1 " +
             "<if test='keyword != null and keyword != \"\"'>" +
-            "  AND (material_code LIKE CONCAT('%', #{keyword}, '%') OR name LIKE CONCAT('%', #{keyword}, '%') OR receipt_number LIKE CONCAT('%', #{keyword}, '%') OR waybill_no LIKE CONCAT('%', #{keyword}, '%') OR `source` LIKE CONCAT('%', #{keyword}, '%'))" +
+            "  AND (material_code LIKE CONCAT('%', #{keyword}, '%') OR name LIKE CONCAT('%', #{keyword}, '%') OR receipt_number LIKE CONCAT('%', #{keyword}, '%') OR waybill_no LIKE CONCAT('%', #{keyword}, '%') OR `source` LIKE CONCAT('%', #{keyword}, '%') OR purchase_order_no LIKE CONCAT('%', #{keyword}, '%'))" +
             "</if>" +
             "<if test='status != null and status != \"\"'>" +
             "  AND status = #{status}" +
@@ -53,6 +53,8 @@ public interface ArrivalMapper {
             "<if test='name != null'>name = #{name},</if>" +
             "<if test='model != null'>model = #{model},</if>" +
             "<if test='unit != null'>unit = #{unit},</if>" +
+            "<if test='purchaseOrderNo != null'>purchase_order_no = #{purchaseOrderNo},</if>" +
+            "<if test='purchaseOrderLine != null'>purchase_order_line = #{purchaseOrderLine},</if>" +
             "<if test='source != null'>`source` = #{source},</if>" +
             "<if test='supplier != null'>supplier = #{supplier},</if>" +
             "<if test='waybillNo != null'>waybill_no = #{waybillNo},</if>" +

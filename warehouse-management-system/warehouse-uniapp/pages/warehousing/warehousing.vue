@@ -8,6 +8,8 @@
 
     <view class="row row-wrap gap-sm mb-md">
       <button class="btn-ghost btn-sm" @tap="exportProgress">导出当前进度</button>
+      <button class="btn-ghost btn-sm" @tap="exportInboundStatus">导出入库情况</button>
+      <button class="btn-ghost btn-sm" @tap="exportReferenceStatus">导出订单引用</button>
     </view>
 
     <!-- 状态筛选 -->
@@ -43,6 +45,10 @@
 
       <!-- 信息网格 -->
       <view class="info-grid">
+        <view>
+          <text class="info-label">采购订单</text>
+          <text>{{ item.purchaseOrderNo || '-' }}</text>
+        </view>
         <view>
           <text class="info-label">来源</text>
           <text>{{ item.source || '-' }}</text>
@@ -241,6 +247,12 @@ export default {
     exportProgress() {
       const status = this.statusIndex === 0 ? '' : this.statusOptions[this.statusIndex]
       downloadExcel('/api/export/arrivals', { status })
+    },
+    exportInboundStatus() {
+      downloadExcel('/api/export/inbound-status')
+    },
+    exportReferenceStatus() {
+      downloadExcel('/api/export/purchase-order-reference')
     },
     edit(item) {
       uni.setStorageSync('EDIT_ARRIVAL', item)

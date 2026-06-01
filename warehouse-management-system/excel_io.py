@@ -15,13 +15,32 @@ MATERIAL_HEADERS = [
     ("备注", "remark"),
 ]
 
-ARRIVAL_HEADERS = [
+PURCHASE_ORDER_HEADERS = [
+    ("采购订单号", "order_no"),
+    ("行号", "order_line"),
     ("物资编码", "material_code"),
     ("名称", "name"),
     ("型号", "model"),
     ("单位", "unit"),
     ("供应商", "supplier"),
+    ("订单数量", "order_quantity"),
+    ("订单日期", "order_date"),
+    ("交货日期", "delivery_date"),
+    ("备注", "remark"),
+]
+
+ARRIVAL_HEADERS = [
+    ("采购订单号", "purchase_order_no"),
+    ("行号", "purchase_order_line"),
+    ("物资编码", "material_code"),
+    ("名称", "name"),
+    ("型号", "model"),
+    ("单位", "unit"),
+    ("来源", "source"),
+    ("供应商", "supplier"),
+    ("运单号", "waybill_no"),
     ("到货数量", "arrival_quantity"),
+    ("包装", "packaging"),
     ("件数", "package_count"),
     ("重量", "weight"),
     ("管库员", "warehouse_keeper"),
@@ -32,6 +51,61 @@ ARRIVAL_HEADERS = [
     ("状态", "status"),
     ("备注", "remark"),
 ]
+
+INBOUND_REPORT_HEADERS = [
+    ("采购订单号", "order_no"),
+    ("行号", "order_line"),
+    ("物资编码", "material_code"),
+    ("名称", "name"),
+    ("型号", "model"),
+    ("单位", "unit"),
+    ("供应商", "supplier"),
+    ("订单数量", "order_quantity"),
+    ("到货数量", "arrival_quantity"),
+    ("已入库数量", "stored_quantity"),
+    ("未入库数量", "not_stored_quantity"),
+    ("入库状态", "inbound_status"),
+]
+
+REFERENCE_REPORT_HEADERS = [
+    ("采购订单号", "order_no"),
+    ("行号", "order_line"),
+    ("物资编码", "material_code"),
+    ("名称", "name"),
+    ("型号", "model"),
+    ("单位", "unit"),
+    ("供应商", "supplier"),
+    ("订单数量", "order_quantity"),
+    ("引用数量", "referenced_quantity"),
+    ("未引用数量", "unreferenced_quantity"),
+    ("引用状态", "reference_status"),
+]
+
+HEADER_ALIASES = {
+    "order_no": ["采购订单号", "采购订单", "订单号", "采购单号", "合同号", "单据编号"],
+    "order_line": ["行号", "行项目", "订单行号", "项目号", "序号"],
+    "material_code": ["物资编码", "物料编码", "物料号", "物资编号", "物料编号", "编码"],
+    "name": ["名称", "物资名称", "物料名称", "物料描述", "品名", "产品名称"],
+    "model": ["型号", "规格型号", "规格", "型号规格"],
+    "unit": ["单位", "计量单位", "采购单位"],
+    "supplier": ["供应商", "供应商名称", "供货单位"],
+    "order_quantity": ["订单数量", "采购数量", "数量", "订单量", "订货数量"],
+    "order_date": ["订单日期", "采购日期", "下单日期", "制单日期"],
+    "delivery_date": ["交货日期", "计划交货日期", "到货日期", "需求日期"],
+    "purchase_order_no": ["采购订单号", "采购订单", "订单号", "采购单号", "合同号", "单据编号"],
+    "purchase_order_line": ["行号", "行项目", "订单行号", "项目号", "序号"],
+    "source": ["来源", "到货来源"],
+    "waybill_no": ["运单号", "物流单号", "快递单号", "运输单号"],
+    "arrival_quantity": ["到货数量", "实到数量", "到货量", "入库数量", "数量"],
+    "packaging": ["包装", "包装方式", "包装规格"],
+    "package_count": ["件数", "包装件数"],
+    "weight": ["重量", "重量(kg)", "毛重"],
+    "warehouse_keeper": ["管库员", "库管员", "保管员"],
+    "acceptance_time": ["验收完成时间", "验收时间"],
+    "shelving_time": ["上架时间"],
+    "receipt_number": ["入库单号", "入库单", "入库编号"],
+    "remark": ["备注", "说明"],
+}
 
 
 HEADER_FILL = PatternFill("solid", fgColor="305496")
@@ -124,6 +198,21 @@ def _to_int(v, default=0):
         return default
 
 
+def _norm_header(value):
+    text = str(value or "").strip()
+    for ch in ("\n", "\r", "\t", " ", "　", "（", "）", "(", ")", "：", ":"):
+        text = text.replace(ch, "")
+    return text.lower()
+
+
+def _cell_text(v):
+    if v is None:
+        return ""
+    if isinstance(v, (datetime, date)):
+        return _fmt_dt(v)
+    return str(v).strip()
+
+
 # ====================== 模板生成 ======================
 
 def gen_material_template(path):
@@ -180,6 +269,13 @@ def _build_header_index(ws, schema):
     """返回 {字段名: 列号(1-based)}"""
     header_row = [c.value for c in ws[1]]
     cn_to_en = {cn: en for cn, en in schema}
+    alias_to_field = {}
+    for cn, en in schema:
+        alias_to_field[_norm_header(cn)] = en
+        alias_to_field[_norm_header(en)] = en
+    for field, aliases in HEADER_ALIASES.items():
+        for alias in aliases:
+            alias_to_field[_norm_header(alias)] = field
     idx = {}
     for col_no, value in enumerate(header_row, start=1):
         if value is None:
@@ -189,6 +285,10 @@ def _build_header_index(ws, schema):
             idx[cn_to_en[key]] = col_no
         elif key in [en for _, en in schema]:
             idx[key] = col_no
+        else:
+            field = alias_to_field.get(_norm_header(key))
+            if field:
+                idx[field] = col_no
     return idx
 
 
@@ -217,6 +317,44 @@ def import_materials_from_excel(path):
     return rows
 
 
+def import_purchase_orders_from_excel(path):
+    wb = load_workbook(path, data_only=True)
+    ws = wb.active
+    idx = _build_header_index(ws, PURCHASE_ORDER_HEADERS)
+    if "order_no" not in idx or "material_code" not in idx:
+        raise ValueError("Excel 缺少必填列「采购订单号」或「物资编码」")
+    if "order_quantity" not in idx:
+        raise ValueError("Excel 缺少数量列，请确认表头包含「订单数量 / 采购数量 / 数量」")
+
+    rows = []
+    for r in range(2, ws.max_row + 1):
+        order_no = ws.cell(row=r, column=idx["order_no"]).value
+        material_code = ws.cell(row=r, column=idx["material_code"]).value
+        if not _cell_text(order_no) or not _cell_text(material_code):
+            continue
+
+        def _v(field):
+            col = idx.get(field)
+            return _cell_text(ws.cell(row=r, column=col).value) if col else ""
+
+        rows.append({
+            "order_no": _v("order_no"),
+            "order_line": _v("order_line"),
+            "material_code": _v("material_code"),
+            "name": _v("name"),
+            "model": _v("model"),
+            "unit": _v("unit"),
+            "supplier": _v("supplier"),
+            "order_quantity": _to_number(
+                ws.cell(row=r, column=idx["order_quantity"]).value
+            ),
+            "order_date": _v("order_date"),
+            "delivery_date": _v("delivery_date"),
+            "remark": _v("remark"),
+        })
+    return rows
+
+
 def import_arrivals_from_excel(path):
     wb = load_workbook(path, data_only=True)
     ws = wb.active
@@ -237,15 +375,20 @@ def import_arrivals_from_excel(path):
             return "" if v is None else str(v).strip()
 
         row = {
+            "purchase_order_no": _v("purchase_order_no"),
+            "purchase_order_line": _v("purchase_order_line"),
             "material_code": _v("material_code"),
             "name": _v("name"),
             "model": _v("model"),
             "unit": _v("unit"),
+            "source": _v("source"),
             "supplier": _v("supplier"),
+            "waybill_no": _v("waybill_no"),
             "arrival_quantity": _to_number(
                 ws.cell(row=r, column=idx["arrival_quantity"]).value
                 if idx.get("arrival_quantity") else 0
             ),
+            "packaging": _v("packaging"),
             "package_count": _to_int(
                 ws.cell(row=r, column=idx["package_count"]).value
                 if idx.get("package_count") else 0
@@ -309,3 +452,11 @@ def export_materials(path, records):
 
 def export_arrivals(path, records):
     export_records(path, records, ARRIVAL_HEADERS, "到货入库进度")
+
+
+def export_inbound_status(path, records):
+    export_records(path, records, INBOUND_REPORT_HEADERS, "已到货物资入库情况")
+
+
+def export_purchase_order_reference(path, records):
+    export_records(path, records, REFERENCE_REPORT_HEADERS, "采购订单引用情况")

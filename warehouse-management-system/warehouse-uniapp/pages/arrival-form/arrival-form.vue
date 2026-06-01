@@ -57,6 +57,21 @@
       </view>
 
       <view class="field">
+        <view class="field-label">采购订单号</view>
+        <view class="row" style="gap: 12rpx;">
+          <input class="input grow" v-model.trim="form.purchaseOrderNo" placeholder="可手填；未填时自动匹配" />
+          <button class="btn-ghost" style="min-height: 92rpx; padding: 0 24rpx; font-size: 24rpx;" @tap="matchPurchaseOrder(false)">
+            匹配
+          </button>
+        </view>
+      </view>
+
+      <view class="field">
+        <view class="field-label">订单行号</view>
+        <input class="input" v-model.trim="form.purchaseOrderLine" placeholder="采购订单行号" />
+      </view>
+
+      <view class="field">
         <view class="field-label">来源</view>
         <input class="input" v-model.trim="form.source" placeholder="例如 项目现场、供应商直送" />
       </view>
@@ -148,6 +163,8 @@ function blankForm() {
     name: '',
     model: '',
     unit: '',
+    purchaseOrderNo: '',
+    purchaseOrderLine: '',
     source: '',
     supplier: '',
     waybillNo: '',
@@ -204,8 +221,37 @@ export default {
       this.form.model = material.model || ''
       this.form.unit = material.unit || ''
       this.lastLookupCode = this.form.materialCode
+      await this.matchPurchaseOrder(true)
       if (!silent) {
         uni.showToast({ title: '已带出物资信息', icon: 'success' })
+      }
+    },
+    async matchPurchaseOrder(silent = true) {
+      if (!this.form.materialCode || this.form.purchaseOrderNo) {
+        return
+      }
+      const order = await request({
+        url: '/api/purchase-orders/match',
+        data: {
+          materialCode: this.form.materialCode,
+          supplier: this.form.supplier || ''
+        },
+        loading: !silent
+      })
+      if (!order) {
+        if (!silent) {
+          uni.showToast({ title: '没有可引用的采购订单', icon: 'none' })
+        }
+        return
+      }
+      this.form.purchaseOrderNo = order.orderNo || ''
+      this.form.purchaseOrderLine = order.orderLine || ''
+      if (!this.form.name) this.form.name = order.name || ''
+      if (!this.form.model) this.form.model = order.model || ''
+      if (!this.form.unit) this.form.unit = order.unit || ''
+      if (!this.form.supplier) this.form.supplier = order.supplier || ''
+      if (!silent) {
+        uni.showToast({ title: '已匹配采购订单', icon: 'success' })
       }
     },
     async voice(field, label) {

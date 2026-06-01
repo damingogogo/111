@@ -58,6 +58,10 @@
 
       <view class="info-grid">
         <view>
+          <text class="info-label">采购订单</text>
+          <text>{{ item.purchaseOrderNo || '-' }}</text>
+        </view>
+        <view>
           <text class="info-label">来源</text>
           <text>{{ item.source || '-' }}</text>
         </view>
