@@ -5,7 +5,9 @@ import ttkbootstrap as ttkb
 from ttkbootstrap.dialogs import Messagebox
 import hashlib
 import hmac
+import queue
 import threading
+import time
 import db
 from config import FONT_FAMILY
 
@@ -139,6 +141,12 @@ class LoginWindow(ttkb.Toplevel):
         expected = hashlib.sha256(password.encode()).hexdigest()
         return hmac.compare_digest(expected, stored)
 
+    def _format_db_error(self, error):
+        text = str(error)
+        if "1045" in text or "Access denied" in text:
+            return "数据库账号没有远程访问权限，请先在服务器 MySQL 授权后再登录或注册。"
+        return text
+
     def _do_action(self):
         if self._busy:
             return
@@ -173,6 +181,8 @@ class LoginWindow(ttkb.Toplevel):
 
     def _run_background(self, work, done, busy_text):
         self._set_busy(True, busy_text)
+        result_queue = queue.Queue(maxsize=1)
+        started_at = time.monotonic()
 
         def runner():
             try:
@@ -181,9 +191,28 @@ class LoginWindow(ttkb.Toplevel):
             except Exception as exc:
                 result = None
                 error = exc
-            self.after(0, lambda: done(result, error))
+            result_queue.put((result, error))
 
         threading.Thread(target=runner, daemon=True).start()
+
+        def poll_result():
+            try:
+                result, error = result_queue.get_nowait()
+            except queue.Empty:
+                if time.monotonic() - started_at > 10:
+                    self._set_busy(False)
+                    Messagebox.show_error(
+                        "数据库连接超时，请检查服务器数据库是否已授权远程访问。",
+                        "错误",
+                        parent=self,
+                    )
+                    return
+                if self.winfo_exists():
+                    self.after(100, poll_result)
+                return
+            done(result, error)
+
+        self.after(100, poll_result)
 
     def _do_login(self, username, password):
         def work():
@@ -199,7 +228,7 @@ class LoginWindow(ttkb.Toplevel):
         def done(result, error):
             self._set_busy(False)
             if error:
-                Messagebox.show_error(f"数据库查询失败:\n{error}", "错误", parent=self)
+                Messagebox.show_error(f"数据库查询失败:\n{self._format_db_error(error)}", "错误", parent=self)
                 return
             if result.get("error"):
                 Messagebox.show_error(result["error"], "登录失败", parent=self)
@@ -233,7 +262,7 @@ class LoginWindow(ttkb.Toplevel):
         def done(result, error):
             self._set_busy(False)
             if error:
-                Messagebox.show_error(f"注册失败:\n{error}", "错误", parent=self)
+                Messagebox.show_error(f"注册失败:\n{self._format_db_error(error)}", "错误", parent=self)
                 return
             if result.get("error"):
                 Messagebox.show_warning(result["error"], "提示", parent=self)
