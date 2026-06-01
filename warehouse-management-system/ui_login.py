@@ -105,11 +105,11 @@ class LoginWindow(ttkb.Toplevel):
             self.title("注册 - 物资到货入库管理系统")
             self.mode_btn.configure(text="已有账号？去登录")
             self.action_btn.configure(text="注 册")
-            self.name_lbl.pack(anchor="w", pady=(4, 0))
-            self.name_var.pack(fill="x", pady=(4, 12))
-            self.confirm_lbl.pack(anchor="w", pady=(4, 0))
-            self.confirm_var.pack(fill="x", pady=(4, 12))
-            self.geometry("420x620")
+            self.name_lbl.pack(anchor="w", pady=(4, 0), before=self.action_btn)
+            self.name_var.pack(fill="x", pady=(4, 12), before=self.action_btn)
+            self.confirm_lbl.pack(anchor="w", pady=(4, 0), before=self.action_btn)
+            self.confirm_var.pack(fill="x", pady=(4, 12), before=self.action_btn)
+            self.geometry("420x700")
         else:
             self.mode = "login"
             self.title("登录 - 物资到货入库管理系统")
