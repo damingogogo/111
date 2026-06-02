@@ -34,6 +34,17 @@
             }
         }
     },
+    "app-harmony" : {
+        "distribute" : {
+            "bundleName" : "com.danzi.warehouse",
+            "modules" : {}
+        },
+        "safearea" : {
+            "bottom" : {
+                "offset" : "auto"
+            }
+        }
+    },
     "h5" : {
         "title" : "物资到货入库管理系统",
         "router" : {
