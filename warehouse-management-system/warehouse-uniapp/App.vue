@@ -1,9 +1,24 @@
 <script>
 export default {
   onLaunch() {
-    this.requestAppPermissions()
+    this.closeSplashscreen()
+    setTimeout(() => {
+      this.requestAppPermissions()
+    }, 1200)
   },
   methods: {
+    closeSplashscreen() {
+      // #ifdef APP-PLUS
+      if (typeof plus === 'undefined' || !plus.navigator || !plus.navigator.closeSplashscreen) {
+        return
+      }
+      setTimeout(() => {
+        try {
+          plus.navigator.closeSplashscreen()
+        } catch (e) {}
+      }, 800)
+      // #endif
+    },
     requestAppPermissions() {
       // #ifdef APP-PLUS
       if (typeof plus === 'undefined' || !plus.android || !plus.android.requestPermissions) {

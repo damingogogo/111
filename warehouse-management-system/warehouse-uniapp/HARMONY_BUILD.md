@@ -7,7 +7,8 @@
 
 ## 已做兼容
 
-- `main.js` 已改成 Vue3 入口，满足 uni-app 鸿蒙运行要求。
+- `main.js` 已改成 Vue2/Vue3 双入口：Android APK 走 Vue2，鸿蒙包走 Vue3，避免 APK 卡启动页。
+- `App.vue` 已增加启动页兜底关闭，并延迟权限申请，避免启动时一直停在图标页。
 - `manifest.json` 已增加 `app-harmony` 配置，包名为 `com.danzi.warehouse`。
 - `.hbuilderx/launch.json` 已把鸿蒙工程目录指定到 `D:/harmony-warehouse/dev` 和 `D:/harmony-warehouse/build`，避免中文目录和长路径导致构建/安装异常。
 
