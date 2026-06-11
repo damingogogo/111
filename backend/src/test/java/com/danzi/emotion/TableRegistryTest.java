@@ -15,7 +15,13 @@ class TableRegistryTest {
         assertThat(registry.find("screening_questions")).isPresent();
         assertThat(registry.find("screening_questions").orElseThrow().writableColumns())
                 .contains("screening_id", "content", "dimension", "sort_no", "answer_type", "options_json", "score_rule", "image_url", "status");
+        assertThat(registry.find("intervention_records")).isPresent();
+        assertThat(registry.find("course_quiz_records")).isPresent();
+        assertThat(registry.find("community_posts")).isPresent();
+        assertThat(registry.find("care_followups")).isPresent();
+        assertThat(registry.find("service_notifications")).isPresent();
+        assertThat(registry.find("service_effect_metrics")).isPresent();
         assertThat(registry.find("not_allowed")).isEmpty();
-        assertThat(registry.all()).hasSize(15);
+        assertThat(registry.all()).hasSize(22);
     }
 }

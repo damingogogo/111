@@ -44,7 +44,7 @@ public class CrudService {
 
     public Map<String, Object> create(String table, Map<String, Object> payload) {
         TableDefinition definition = mustFind(table);
-        Map<String, Object> values = writableValues(definition, payload);
+        Map<String, Object> values = writableValues(definition, payload, true);
         if (values.isEmpty()) {
             throw new IllegalArgumentException("没有可保存字段");
         }
@@ -66,7 +66,7 @@ public class CrudService {
 
     public Map<String, Object> update(String table, long id, Map<String, Object> payload) {
         TableDefinition definition = mustFind(table);
-        Map<String, Object> values = writableValues(definition, payload);
+        Map<String, Object> values = writableValues(definition, payload, false);
         if (values.isEmpty()) {
             return get(table, id);
         }
@@ -91,11 +91,18 @@ public class CrudService {
         return registry.find(table).orElseThrow(() -> new IllegalArgumentException("不支持的表: " + table));
     }
 
-    private Map<String, Object> writableValues(TableDefinition definition, Map<String, Object> payload) {
+    private Map<String, Object> writableValues(TableDefinition definition, Map<String, Object> payload, boolean create) {
         Map<String, Object> values = new LinkedHashMap<>();
         for (String column : definition.writableColumns()) {
             if (payload.containsKey(column)) {
-                values.put(column, payload.get(column));
+                Object value = payload.get(column);
+                if (value instanceof String text && text.isBlank()) {
+                    if (create) {
+                        continue;
+                    }
+                    value = null;
+                }
+                values.put(column, value);
             }
         }
         return values;

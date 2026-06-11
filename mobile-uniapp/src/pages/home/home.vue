@@ -23,6 +23,22 @@
         <text>政策中心</text>
         <text>福利说明</text>
       </view>
+      <view class="quick" @tap="go('/pages/community/community')">
+        <text>互助社区</text>
+        <text>主题分享</text>
+      </view>
+    </view>
+
+    <view class="section-title">服务通知</view>
+    <view v-if="home.notifications.length === 0" class="card">
+      <view class="desc">暂无新通知。</view>
+    </view>
+    <view v-for="notice in home.notifications" :key="notice.id" class="card notice-card">
+      <view class="notice-top">
+        <view class="title">{{ notice.title }}</view>
+        <view class="tag">{{ notice.status }}</view>
+      </view>
+      <view class="desc">{{ notice.content }}</view>
     </view>
 
     <view class="section-title">最近报告</view>
@@ -53,8 +69,18 @@
       <view>
         <view class="title">{{ course.title }}</view>
         <view class="desc">{{ course.summary }}</view>
-        <view class="tag">{{ course.duration_minutes }} 分钟 · 进度 {{ course.progress || 0 }}%</view>
+        <view class="tag">{{ course.duration_minutes }} 分钟 · 进度 {{ course.progress || 0 }}% · {{ Number(course.favorite) ? '已收藏' : '可收藏' }}</view>
       </view>
+    </view>
+
+    <view class="section-row">
+      <view class="section-title">互助社区</view>
+      <view class="link" @tap="go('/pages/community/community')">全部</view>
+    </view>
+    <view v-for="post in home.communityPosts" :key="post.id" class="card policy-card" @tap="go('/pages/community/community')">
+      <view class="title">{{ post.title }}</view>
+      <view class="desc">{{ post.content }}</view>
+      <view class="tag">{{ post.category }} · {{ post.author_name }}</view>
     </view>
 
     <view class="section-row">
@@ -75,7 +101,7 @@ import { reactive } from 'vue'
 import { imageUrl, usePlaceholder } from '../../utils/images.js'
 import { request, requireEmployee } from '../../utils/request.js'
 
-const home = reactive({ employee: {}, latestReport: {}, latestMood: {}, nextAppointment: {}, courses: [], policies: [] })
+const home = reactive({ employee: {}, latestReport: {}, latestMood: {}, nextAppointment: {}, courses: [], notifications: [], communityPosts: [], policies: [] })
 
 function go(url) {
   const tabPages = ['/pages/assessment/assessment', '/pages/course/course', '/pages/consult/consult', '/pages/profile/profile']
@@ -168,6 +194,17 @@ onPullDownRefresh(async () => {
 
 .policy-card {
   display: block;
+}
+
+.notice-card {
+  display: block;
+}
+
+.notice-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
 }
 
 .status-grid {

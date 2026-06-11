@@ -56,7 +56,7 @@
         <el-select v-else-if="selectOptions(column).length" v-model="form[column]" clearable filterable>
           <el-option v-for="item in selectOptions(column)" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
-        <el-input-number v-else-if="isNumberColumn(column)" v-model="form[column]" :min="0" :max="100" />
+        <el-input-number v-else-if="isNumberColumn(column)" v-model="form[column]" :min="0" :max="numberMax(column)" />
         <el-date-picker v-else-if="isDateOnlyColumn(column)" v-model="form[column]" type="date" value-format="YYYY-MM-DD" />
         <el-date-picker v-else-if="isDateTimeColumn(column)" v-model="form[column]" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" />
         <el-input v-else-if="isLongTextColumn(column)" v-model="form[column]" type="textarea" :rows="4" />
@@ -144,11 +144,42 @@ const labels = {
   content: '内容',
   summary: '摘要',
   suggestion: '建议',
+  answers_json: '答题JSON',
+  risk_points: '风险点',
+  enterprise_notice_consent: '告知企业',
   risk_level: '风险等级',
   employee_id: '员工ID',
   screening_id: '筛查ID',
   consultant_id: '咨询师ID',
   department_id: '部门ID',
+  course_id: '课程ID',
+  plan_id: '方案ID',
+  report_id: '报告ID',
+  action: '动作',
+  state_note: '状态备注',
+  video_url: '视频地址',
+  mind_map: '思维导图',
+  quiz_json: '小测配置JSON',
+  anonymous: '匿名',
+  reply_count: '回复数',
+  target_type: '通知对象',
+  target_id: '对象ID',
+  channel: '通知渠道',
+  period_label: '周期',
+  retained_count: '留存人数',
+  employee_count: '员工人数',
+  happiness_before: '幸福感前',
+  happiness_after: '幸福感后',
+  productivity_before: '生产力前',
+  productivity_after: '生产力后',
+  fit_before: '适配度前',
+  fit_after: '适配度后',
+  encrypted_file_url: '加密数据文件',
+  report_summary: '分析摘要',
+  consent_to_notify: '同意通知企业',
+  follow_note: '跟进记录',
+  assigned_role: '负责角色',
+  followed_at: '跟进时间',
   completed: '是否完成',
   created_at: '创建时间'
 }
@@ -176,6 +207,24 @@ const valueLabels = {
     false: '未完成',
     true: '已完成'
   },
+  anonymous: {
+    0: '实名',
+    1: '匿名',
+    false: '实名',
+    true: '匿名'
+  },
+  consent_to_notify: {
+    0: '未同意',
+    1: '已同意',
+    false: '未同意',
+    true: '已同意'
+  },
+  enterprise_notice_consent: {
+    0: '未同意',
+    1: '已同意',
+    false: '未同意',
+    true: '已同意'
+  },
   content_type: {
     'image/jpeg': 'JPEG 图片',
     'image/png': 'PNG 图片',
@@ -202,11 +251,18 @@ const valueLabels = {
     screening_questions: '筛查题库',
     screening_reports: '健康报告',
     intervention_plans: '干预方案',
+    intervention_records: '干预记录',
     courses: '课程管理',
     course_progress: '学习进度',
+    course_favorites: '课程收藏',
+    course_quiz_records: '课程小测',
     consultants: '咨询师',
     appointments: '咨询预约',
     mood_logs: '状态追踪',
+    community_posts: '互助社区',
+    care_followups: '关怀跟进',
+    service_notifications: '服务通知',
+    service_effect_metrics: '效果量化',
     policies: '政策内容',
     system_settings: '后台设置',
     upload_files: '上传记录'
@@ -235,17 +291,24 @@ function fieldLabel(column) {
 }
 
 function isImageColumn(column) {
-  return column.endsWith('_url') || column === 'url'
+  return ['avatar_url', 'image_url', 'cover_url', 'chart_image_url', 'url'].includes(column)
 }
 
 function isTagColumn(column) {
   return column.includes('status') ||
     column.includes('risk_level') ||
-    ['role', 'answer_type', 'score_rule', 'completed', 'content_type', 'biz_type', 'method', 'action_type'].includes(column)
+    ['role', 'answer_type', 'score_rule', 'completed', 'anonymous', 'consent_to_notify', 'enterprise_notice_consent', 'content_type', 'biz_type', 'method', 'action_type', 'action', 'target_type', 'channel', 'assigned_role'].includes(column)
 }
 
 function isNumberColumn(column) {
-  return ['score', 'progress', 'duration_minutes', 'estimated_minutes', 'mood_score', 'work_stress', 'family_stress', 'sort_no', 'size_bytes'].includes(column)
+  return ['score', 'progress', 'duration_minutes', 'estimated_minutes', 'mood_score', 'work_stress', 'family_stress', 'sort_no', 'size_bytes', 'employee_id', 'screening_id', 'consultant_id', 'department_id', 'course_id', 'plan_id', 'report_id', 'target_id', 'reply_count', 'retained_count', 'employee_count', 'happiness_before', 'happiness_after', 'productivity_before', 'productivity_after', 'fit_before', 'fit_after'].includes(column)
+}
+
+function numberMax(column) {
+  if (['score', 'progress', 'mood_score', 'work_stress', 'family_stress', 'happiness_before', 'happiness_after', 'productivity_before', 'productivity_after', 'fit_before', 'fit_after'].includes(column)) {
+    return 100
+  }
+  return 999999
 }
 
 function isDateOnlyColumn(column) {
@@ -257,22 +320,29 @@ function isDateTimeColumn(column) {
 }
 
 function isLongTextColumn(column) {
-  return ['content', 'description', 'summary', 'suggestion', 'notes', 'options_json'].includes(column)
+  return ['content', 'description', 'summary', 'suggestion', 'risk_points', 'notes', 'options_json', 'answers_json', 'mind_map', 'quiz_json', 'state_note', 'follow_note', 'report_summary'].includes(column)
 }
 
 function selectOptions(column) {
   const options = {
-    status: ['启用', '停用', '在职', '离职', '上架', '下架', '发布', '草稿', '可预约', '不可预约', '待确认', '已确认', '已完成'],
+    status: ['启用', '停用', '在职', '离职', '上架', '下架', '发布', '草稿', '可预约', '不可预约', '待确认', '已确认', '已完成', '已取消', '未读', '已读', '待跟进', '观察中', '已跟进'],
     risk_level: ['低风险', '中风险', '高风险'],
     role: ['SUPER_ADMIN', 'HR', 'MANAGER', 'CARE', 'DATA', 'DEPT_ADMIN', 'AUDITOR'],
     method: ['视频', '语音'],
     answer_type: ['single'],
     score_rule: ['likert_5', 'custom'],
     completed: [0, 1],
+    anonymous: [1, 0],
+    consent_to_notify: [1, 0],
+    enterprise_notice_consent: [1, 0],
     content_type: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
-    biz_type: ['avatar', 'course', 'report', 'policy', 'consultant', 'department', 'mood', 'screening', 'intervention', 'setting', 'manual', 'common', 'admin_users', 'departments', 'employees', 'screenings', 'screening_questions', 'screening_reports', 'intervention_plans', 'courses', 'course_progress', 'consultants', 'appointments', 'mood_logs', 'policies', 'system_settings', 'upload_files'],
+    biz_type: ['avatar', 'course', 'report', 'policy', 'consultant', 'department', 'mood', 'screening', 'intervention', 'setting', 'manual', 'common', 'admin_users', 'departments', 'employees', 'screenings', 'screening_questions', 'screening_reports', 'intervention_plans', 'intervention_records', 'courses', 'course_progress', 'course_favorites', 'course_quiz_records', 'consultants', 'appointments', 'mood_logs', 'community_posts', 'care_followups', 'service_notifications', 'service_effect_metrics', 'policies', 'system_settings', 'upload_files'],
     action_type: ['自助工具', '专业咨询', '职场指导', '状态追踪', '预警对接', '关怀提醒', '角色平衡'],
-    category: ['时间管理', '角色平衡', '职业信心', '情绪调节', '职场沟通', '恢复力', '生活支持', '自助工具', '团队协作', '成长轨迹', '企业政策', '母婴福利', '心理福利']
+    action: ['查看', '收藏', '打卡', '预约'],
+    target_type: ['all', 'department', 'employee'],
+    channel: ['企业内部通知', '小程序通知', '短信/企业微信'],
+    assigned_role: ['HR', '关怀专员', '部门主管', '心理咨询师'],
+    category: ['时间管理', '角色平衡', '职业信心', '情绪调节', '职场沟通', '恢复力', '生活支持', '自助工具', '团队协作', '成长轨迹', '企业政策', '母婴福利', '心理福利', '经验分享']
   }
   return (options[column] || []).map((value) => ({
     value,
@@ -294,6 +364,7 @@ async function loadTables() {
 }
 
 async function loadData() {
+  if (!currentTable.value) return
   rows.value = await api.get(`/admin/${currentTable.value}`, { params: { keyword: keyword.value, page: 1, size: 80 } })
 }
 
@@ -351,7 +422,11 @@ onMounted(async () => {
   await loadData()
 })
 
-watch(currentTable, loadData)
+watch(currentTable, async () => {
+  keyword.value = ''
+  dialogVisible.value = false
+  await loadData()
+})
 </script>
 
 <style scoped>

@@ -137,7 +137,12 @@ function shortDate(value) {
 }
 
 function go(url) {
-  uni.switchTab({ url })
+  const tabPages = ['/pages/course/course', '/pages/consult/consult', '/pages/profile/profile']
+  if (tabPages.includes(url)) {
+    uni.switchTab({ url })
+  } else {
+    uni.navigateTo({ url })
+  }
 }
 
 async function loadLogs() {

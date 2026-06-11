@@ -49,6 +49,7 @@ import {
   Brain,
   Building2,
   CalendarClock,
+  ClipboardCheck,
   FileText,
   HeartPulse,
   ImageUp,
@@ -56,6 +57,7 @@ import {
   MessageCircle,
   Settings,
   ShieldAlert,
+  Sparkles,
   Users
 } from 'lucide-vue-next'
 
@@ -68,13 +70,21 @@ const menu = [
   { table: 'departments', label: '部门管理', icon: Building2 },
   { table: 'employees', label: '员工管理', icon: Users },
   { table: 'screenings', label: 'AI筛查', icon: Brain },
+  { table: 'screening_questions', label: '筛查题目', icon: Brain },
   { table: 'screening_reports', label: '健康报告', icon: HeartPulse },
   { table: 'intervention_plans', label: '干预方案', icon: ShieldAlert },
+  { table: 'intervention_records', label: '干预记录', icon: ClipboardCheck },
   { table: 'courses', label: '课程管理', icon: BookOpen },
   { table: 'course_progress', label: '学习进度', icon: BookOpen },
+  { table: 'course_favorites', label: '课程收藏', icon: BookOpen },
+  { table: 'course_quiz_records', label: '课程小测', icon: ClipboardCheck },
   { table: 'consultants', label: '咨询师', icon: MessageCircle },
   { table: 'appointments', label: '咨询预约', icon: CalendarClock },
   { table: 'mood_logs', label: '状态追踪', icon: HeartPulse },
+  { table: 'community_posts', label: '互助社区', icon: MessageCircle },
+  { table: 'care_followups', label: '关怀跟进', icon: ShieldAlert },
+  { table: 'service_notifications', label: '服务通知', icon: CalendarClock },
+  { table: 'service_effect_metrics', label: '效果量化', icon: Sparkles },
   { table: 'policies', label: '政策内容', icon: FileText },
   { table: 'system_settings', label: '后台设置', icon: Settings },
   { table: 'upload_files', label: '上传记录', icon: ImageUp }

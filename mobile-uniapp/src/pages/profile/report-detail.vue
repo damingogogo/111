@@ -29,6 +29,10 @@
     <view class="section-title">AI 建议</view>
     <view class="card">
       <view class="desc">{{ detail.report?.suggestion || '暂无建议' }}</view>
+      <view class="tag risk-points" v-if="detail.report?.risk_points">风险点：{{ detail.report.risk_points }}</view>
+      <view class="tag" v-if="detail.report?.risk_level === '高风险'">
+        {{ Number(detail.report.enterprise_notice_consent) ? '已同意企业脱敏关怀提示' : '未告知企业，仅保留个人建议' }}
+      </view>
     </view>
 
     <view class="section-title">匹配干预方案</view>
@@ -36,7 +40,25 @@
       <view class="title">{{ plan.title }}</view>
       <view class="desc">{{ plan.content }}</view>
       <view class="tag">{{ plan.action_type }}</view>
-      <view class="btn secondary plan-btn" @tap="openPlan(plan)">执行方案</view>
+      <textarea class="textarea plan-note" v-model="planNotes[plan.id]" placeholder="记录执行前后的状态变化（可选）" />
+      <view class="plan-actions">
+        <view class="btn secondary plan-btn" @tap="recordPlan(plan, '收藏')">收藏</view>
+        <view class="btn secondary plan-btn" @tap="openPlan(plan)">打开入口</view>
+        <view class="btn plan-btn" @tap="recordPlan(plan, '打卡')">完成打卡</view>
+      </view>
+    </view>
+
+    <view class="section-title">执行记录</view>
+    <view v-if="records.length === 0" class="card">
+      <view class="desc">还没有干预执行记录。</view>
+    </view>
+    <view v-for="record in records" :key="record.id" class="card record-card">
+      <view class="record-top">
+        <view class="title">{{ record.plan_title || record.action_type }}</view>
+        <view class="tag">{{ record.action }}</view>
+      </view>
+      <view class="desc">{{ record.state_note || '已记录一次方案执行' }}</view>
+      <view class="desc">{{ record.created_at }}</view>
     </view>
 
     <view class="action-grid">
@@ -47,30 +69,69 @@
 </template>
 
 <script setup>
-import { computed, reactive } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { request, requireEmployee } from '../../utils/request.js'
 
 const detail = reactive({ report: {}, plans: [], history: [] })
+const records = ref([])
+const planNotes = reactive({})
 const chartHistory = computed(() => (detail.history || []).slice().reverse())
 
 onLoad(async (query) => {
   if (!requireEmployee()) return
   const data = await request(`/mobile/reports/${query.id}`)
   Object.assign(detail, data)
+  await loadRecords()
 })
 
 function go(url) {
-  uni.switchTab({ url })
+  const tabPages = ['/pages/course/course', '/pages/consult/consult', '/pages/profile/profile']
+  if (tabPages.includes(url)) {
+    uni.switchTab({ url })
+  } else {
+    uni.navigateTo({ url })
+  }
 }
 
 function openPlan(plan) {
+  recordPlan(plan, '查看')
   const action = String(plan.action_type || '')
   if (action.includes('咨询')) {
     go('/pages/consult/consult')
     return
   }
+  if (action.includes('状态')) {
+    go('/pages/mood/mood')
+    return
+  }
   go('/pages/course/course')
+}
+
+async function recordPlan(plan, action) {
+  const employeeId = requireEmployee()
+  if (!employeeId) return
+  await request('/mobile/intervention-records', {
+    method: 'POST',
+    data: {
+      employeeId,
+      planId: plan.id,
+      reportId: detail.report?.id,
+      action,
+      stateNote: planNotes[plan.id] || `${action}${plan.title}`
+    }
+  })
+  if (action !== '查看') {
+    uni.showToast({ title: action === '打卡' ? '已打卡' : '已收藏', icon: 'none' })
+  }
+  planNotes[plan.id] = ''
+  await loadRecords()
+}
+
+async function loadRecords() {
+  const employeeId = requireEmployee()
+  if (!employeeId) return
+  records.value = await request(`/mobile/intervention-records?employeeId=${employeeId}`)
 }
 </script>
 
@@ -143,7 +204,38 @@ function openPlan(plan) {
 
 .plan-btn {
   height: 68rpx;
-  margin-top: 18rpx;
   font-size: 24rpx;
+}
+
+.risk-points {
+  margin-top: 16rpx;
+}
+
+.plan-note {
+  width: 100%;
+  min-height: 120rpx;
+  margin-top: 16rpx;
+  padding: 16rpx;
+  border: 1rpx solid #e4eaf7;
+  border-radius: 12rpx;
+  background: #fbfcff;
+  box-sizing: border-box;
+}
+
+.plan-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12rpx;
+  margin-top: 16rpx;
+}
+
+.record-card {
+  display: block;
+}
+
+.record-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 18rpx;
 }
 </style>

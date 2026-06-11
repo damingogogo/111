@@ -40,6 +40,16 @@
         <view class="desc">已完成 {{ answeredCount }}/{{ questions.length }} 题</view>
         <progress :percent="progressPercent" activeColor="#3f72f5" backgroundColor="#e7eefb" stroke-width="6" />
       </view>
+      <view class="card consent-card">
+        <view class="title">高风险关怀选择</view>
+        <view class="desc">若筛查提示高风险，你可以自主选择是否让企业授权关怀人员收到脱敏提示。企业端只显示部门、工号和风险等级，不展示姓名、手机号和具体答题内容。</view>
+        <view class="switch-row">
+          <view>
+            <view class="tag">{{ enterpriseNoticeConsent ? '愿意接收企业关怀' : '暂不告知企业' }}</view>
+          </view>
+          <switch :checked="enterpriseNoticeConsent" color="#3f72f5" @change="enterpriseNoticeConsent = $event.detail.value" />
+        </view>
+      </view>
       <view v-if="questions.length === 0" class="card empty-card">
         <view class="title">该筛查还没有配置题目</view>
         <view class="desc">请在后台“筛查题库”中新增题目，填写筛查ID、题干、选项配置JSON，并设置状态为启用。</view>
@@ -79,7 +89,8 @@ const screenings = ref([])
 const questions = ref([])
 const active = ref(null)
 const answers = reactive({})
-const draft = reactive({ screeningId: null, title: '', answers: {} })
+const draft = reactive({ screeningId: null, title: '', answers: {}, enterpriseNoticeConsent: false })
+const enterpriseNoticeConsent = ref(false)
 const draftKey = 'screeningDraft'
 const answeredCount = computed(() => Object.keys(answers).length)
 const progressPercent = computed(() => questions.value.length ? Math.round(answeredCount.value / questions.value.length * 100) : 0)
@@ -96,6 +107,7 @@ async function start(item) {
   active.value = item
   questions.value = await request(`/mobile/screenings/${item.id}/questions`)
   Object.keys(answers).forEach((key) => delete answers[key])
+  enterpriseNoticeConsent.value = false
   saveDraft()
 }
 
@@ -109,6 +121,7 @@ async function resumeDraft() {
   questions.value = await request(`/mobile/screenings/${item.id}/questions`)
   Object.keys(answers).forEach((key) => delete answers[key])
   Object.assign(answers, draft.answers || {})
+  enterpriseNoticeConsent.value = Boolean(draft.enterpriseNoticeConsent)
 }
 
 function optionList(question) {
@@ -143,15 +156,16 @@ function setAnswer(questionId, option) {
 
 function saveDraft() {
   if (!active.value) return
-  const value = { screeningId: active.value.id, title: active.value.title, answers: { ...answers } }
+  const value = { screeningId: active.value.id, title: active.value.title, answers: { ...answers }, enterpriseNoticeConsent: enterpriseNoticeConsent.value }
   uni.setStorageSync(draftKey, value)
   Object.assign(draft, value)
 }
 
 function clearDraft() {
   uni.removeStorageSync(draftKey)
-  Object.assign(draft, { screeningId: null, title: '', answers: {} })
+  Object.assign(draft, { screeningId: null, title: '', answers: {}, enterpriseNoticeConsent: false })
   Object.keys(answers).forEach((key) => delete answers[key])
+  enterpriseNoticeConsent.value = false
 }
 
 function pause() {
@@ -171,7 +185,7 @@ async function submit() {
   const score = Math.round(values.reduce((sum, val) => sum + Number(val.score || 0), 0) / values.length)
   const report = await request(`/mobile/screenings/${active.value.id}/submit`, {
     method: 'POST',
-    data: { employeeId: id, score, answers: { ...answers } }
+    data: { employeeId: id, score, answers: { ...answers }, enterpriseNoticeConsent: enterpriseNoticeConsent.value }
   })
   uni.showToast({ title: '报告已生成' })
   active.value = null
@@ -183,7 +197,8 @@ async function submit() {
 
 onLoad(async () => {
   if (!requireEmployee()) return
-  Object.assign(draft, uni.getStorageSync(draftKey) || { screeningId: null, title: '', answers: {} })
+  Object.assign(draft, uni.getStorageSync(draftKey) || { screeningId: null, title: '', answers: {}, enterpriseNoticeConsent: false })
+  enterpriseNoticeConsent.value = Boolean(draft.enterpriseNoticeConsent)
   screenings.value = await request('/mobile/screenings')
 })
 </script>
@@ -231,6 +246,19 @@ onLoad(async () => {
   border-radius: 14rpx;
   background: rgba(255, 255, 255, 0.94);
   border: 1rpx solid #edf1fb;
+}
+
+.consent-card {
+  display: block;
+  margin-top: 18rpx;
+}
+
+.switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+  margin-top: 18rpx;
 }
 
 .empty-card {

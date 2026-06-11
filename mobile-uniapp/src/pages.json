@@ -60,6 +60,12 @@
       "style": {
         "navigationBarTitleText": "政策中心"
       }
+    },
+    {
+      "path": "pages/community/community",
+      "style": {
+        "navigationBarTitleText": "互助社区"
+      }
     }
   ],
   "tabBar": {
