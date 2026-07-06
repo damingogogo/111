@@ -8,7 +8,7 @@
 
     <view class="quick-grid">
       <view class="quick" @tap="go('/pages/assessment/assessment')">
-        <text>AI筛查</text>
+        <text>情绪筛查</text>
         <text>5-8分钟</text>
       </view>
       <view class="quick" @tap="go('/pages/mood/mood')">
@@ -16,16 +16,12 @@
         <text>每日变化</text>
       </view>
       <view class="quick" @tap="go('/pages/consult/consult')">
-        <text>预约咨询</text>
-        <text>隐私加密</text>
+        <text>心理支持</text>
+        <text>资源指引</text>
       </view>
       <view class="quick" @tap="go('/pages/policy/policy')">
         <text>政策中心</text>
         <text>福利说明</text>
-      </view>
-      <view class="quick" @tap="go('/pages/community/community')">
-        <text>互助社区</text>
-        <text>主题分享</text>
       </view>
     </view>
 
@@ -45,7 +41,7 @@
     <view class="card report" @tap="openLatestReport">
       <view>
         <view class="title">{{ home.latestReport?.risk_level || '暂无报告' }}</view>
-        <view class="desc">{{ home.latestReport?.summary || '完成一次 AI 情绪筛查后，这里会生成个人报告。' }}</view>
+        <view class="desc">{{ home.latestReport?.summary || '完成一次情绪筛查后，这里会形成个人报告。' }}</view>
       </view>
       <view class="score">{{ home.latestReport?.score || '--' }}</view>
     </view>
@@ -57,9 +53,9 @@
         <view class="desc">工作压力 {{ home.latestMood?.work_stress || '--' }}</view>
       </view>
       <view class="card mini-card" @tap="go('/pages/consult/consult')">
-        <view class="tag">下次咨询</view>
-        <view class="title">{{ home.nextAppointment?.consultant_name || '立即预约' }}</view>
-        <view class="desc">{{ home.nextAppointment?.appointment_time || '选择合适时间' }}</view>
+        <view class="tag">心理支持</view>
+        <view class="title">查看资源</view>
+        <view class="desc">呼吸练习、压力识别与求助指引</view>
       </view>
     </view>
 
@@ -71,16 +67,6 @@
         <view class="desc">{{ course.summary }}</view>
         <view class="tag">{{ course.duration_minutes }} 分钟 · 进度 {{ course.progress || 0 }}% · {{ Number(course.favorite) ? '已收藏' : '可收藏' }}</view>
       </view>
-    </view>
-
-    <view class="section-row">
-      <view class="section-title">互助社区</view>
-      <view class="link" @tap="go('/pages/community/community')">全部</view>
-    </view>
-    <view v-for="post in home.communityPosts" :key="post.id" class="card policy-card" @tap="go('/pages/community/community')">
-      <view class="title">{{ post.title }}</view>
-      <view class="desc">{{ post.content }}</view>
-      <view class="tag">{{ post.category }} · {{ post.author_name }}</view>
     </view>
 
     <view class="section-row">
@@ -101,7 +87,7 @@ import { reactive } from 'vue'
 import { imageUrl, usePlaceholder } from '../../utils/images.js'
 import { request, requireEmployee } from '../../utils/request.js'
 
-const home = reactive({ employee: {}, latestReport: {}, latestMood: {}, nextAppointment: {}, courses: [], notifications: [], communityPosts: [], policies: [] })
+const home = reactive({ employee: {}, latestReport: {}, latestMood: {}, courses: [], notifications: [], policies: [] })
 
 function go(url) {
   const tabPages = ['/pages/assessment/assessment', '/pages/course/course', '/pages/consult/consult', '/pages/profile/profile']

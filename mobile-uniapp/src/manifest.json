@@ -1,7 +1,7 @@
 {
   "name": "返岗情绪支持",
-  "appid": "__UNI__EMOTIONAI",
-  "description": "产后返岗女性专属心理服务与职场适应指导小程序",
+  "appid": "__UNI__EMOTIONCARE",
+  "description": "产后返岗女性情绪记录与职场适应指导工具",
   "versionName": "1.0.0",
   "versionCode": "100",
   "transformPx": false,

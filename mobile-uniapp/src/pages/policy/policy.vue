@@ -13,7 +13,7 @@
       </view>
       <view v-if="visiblePolicies.length === 0" class="card empty-card">
         <view class="title">没有匹配的政策</view>
-        <view class="desc">可以换个关键词，或在后台“政策内容”中新增发布状态的政策。</view>
+        <view class="desc">可以换个关键词，或在后台“政策内容”中维护政策资料。</view>
       </view>
       <view v-for="item in visiblePolicies" :key="item.id" class="card policy-card" @tap="openPolicy(item)">
         <view class="title">{{ item.title }}</view>

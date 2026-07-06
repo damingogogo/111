@@ -107,7 +107,7 @@ const quizList = computed(() => {
 const lessons = [
   { title: '场景识别', desc: '识别返岗阶段最容易消耗能量的工作和家庭场景。' },
   { title: '方法练习', desc: '用 3-8 分钟完成一次呼吸、沟通或任务拆解练习。' },
-  { title: '行动清单', desc: '生成一条今天可以执行的小行动，并记录完成情况。' }
+  { title: '行动清单', desc: '整理一条今天可以执行的小行动，并记录完成情况。' }
 ]
 
 onLoad(async (query) => {

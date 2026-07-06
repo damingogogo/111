@@ -24,7 +24,7 @@
     </view>
     <view class="menu-grid">
       <view class="menu-item" @tap="go('/pages/mood/mood')">状态记录</view>
-      <view class="menu-item" @tap="go('/pages/consult/consult')">咨询预约</view>
+      <view class="menu-item" @tap="go('/pages/consult/consult')">心理支持</view>
       <view class="menu-item" @tap="go('/pages/policy/policy')">政策中心</view>
     </view>
 
@@ -64,7 +64,7 @@
 
     <view v-if="reports.length === 0" class="card empty-card">
       <view class="title">还没有筛查报告</view>
-      <view class="desc">完成一次 AI 筛查后，系统会生成风险等级、得分趋势和干预建议。</view>
+      <view class="desc">完成一次情绪筛查后，系统会形成风险等级、得分趋势和干预建议。</view>
       <view class="btn" @tap="go('/pages/assessment/assessment')">去做筛查</view>
     </view>
     <view v-for="report in reports" :key="report.id" class="card" @tap="openReport(report)">

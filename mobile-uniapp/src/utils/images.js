@@ -4,14 +4,12 @@ const THEME_IMAGES = {
   question: '/static/theme/screening.png',
   course: '/static/theme/course.png',
   progress: '/static/theme/course.png',
-  consultant: '/static/theme/avatar-consultant.png',
   avatar: '/static/theme/profile.png',
   employee: '/static/theme/profile.png',
   report: '/static/theme/report.png',
   intervention: '/static/theme/report.png',
   mood: '/static/theme/mood.png',
   policy: '/static/theme/policy.png',
-  appointment: '/static/theme/consult.png',
   dept: '/static/theme/policy.png',
   setting: '/static/theme/policy.png'
 }

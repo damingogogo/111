@@ -8,17 +8,15 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class MobileControllerTest {
     @Test
-    void homeOnlyUsesFutureAppointmentsForNextAppointment() {
+    void homeDoesNotExposeAppointmentOrCommunityDataForPersonalAuditBuild() {
         JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
         MobileController controller = new MobileController(jdbcTemplate, new ObjectMapper());
 
@@ -39,14 +37,12 @@ class MobileControllerTest {
 
         controller.home(1L);
 
-        verify(jdbcTemplate).queryForList(
-                org.mockito.ArgumentMatchers.argThat(sql ->
-                        sql.contains("from appointments")
-                                && sql.contains("a.status <> '已取消'")
-                                && sql.contains("a.appointment_time >= now()")
-                                && sql.contains("order by a.appointment_time asc")),
+        org.mockito.Mockito.verify(jdbcTemplate, org.mockito.Mockito.never()).queryForList(
+                org.mockito.ArgumentMatchers.contains("from appointments"),
                 eq(1L)
         );
-        assertThat(true).isTrue();
+        org.mockito.Mockito.verify(jdbcTemplate, org.mockito.Mockito.never()).queryForList(
+                org.mockito.ArgumentMatchers.contains("from community_posts")
+        );
     }
 }

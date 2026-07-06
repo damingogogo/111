@@ -16,7 +16,7 @@
     {
       "path": "pages/assessment/assessment",
       "style": {
-        "navigationBarTitleText": "AI 筛查"
+        "navigationBarTitleText": "情绪筛查"
       }
     },
     {
@@ -28,7 +28,7 @@
     {
       "path": "pages/consult/consult",
       "style": {
-        "navigationBarTitleText": "心理咨询"
+        "navigationBarTitleText": "心理支持"
       }
     },
     {
@@ -60,12 +60,6 @@
       "style": {
         "navigationBarTitleText": "政策中心"
       }
-    },
-    {
-      "path": "pages/community/community",
-      "style": {
-        "navigationBarTitleText": "互助社区"
-      }
     }
   ],
   "tabBar": {
@@ -88,7 +82,7 @@
       },
       {
         "pagePath": "pages/consult/consult",
-        "text": "咨询"
+        "text": "支持"
       },
       {
         "pagePath": "pages/profile/profile",

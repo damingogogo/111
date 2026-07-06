@@ -1,222 +1,88 @@
 <template>
   <view class="page">
     <view class="hero">
-      <view class="hero-title">一对一专业咨询</view>
-      <view class="hero-sub">员工自主选择平台认证咨询师，可预约线上视频或语音咨询，记录全程加密保密。</view>
+      <view class="hero-title">心理支持资源</view>
+      <view class="hero-sub">提供情绪调节、压力识别和求助路径说明，帮助你整理当前状态与下一步行动。</view>
       <image class="hero-visual" src="/static/theme/consult.png" mode="aspectFill" />
     </view>
-    <view class="card booking-form">
-      <view class="title">预约设置</view>
-      <picker mode="date" :value="form.date" @change="form.date = $event.detail.value">
-        <view class="input picker">日期：{{ form.date }}</view>
-      </picker>
-      <picker mode="selector" :range="times" @change="form.time = times[$event.detail.value]">
-        <view class="input picker">时间：{{ form.time }}</view>
-      </picker>
-      <picker mode="selector" :range="methods" @change="method = methods[$event.detail.value]">
-        <view class="input picker">方式：{{ method }}</view>
-      </picker>
-      <textarea class="textarea" v-model="form.notes" placeholder="想和咨询师沟通的问题（可选）" />
+
+    <view class="card intro-card">
+      <view class="title">使用说明</view>
+      <view class="desc">以下内容用于个人自助参考。若出现持续低落、焦虑、睡眠严重受影响等情况，请及时联系企业 HR、线下医疗机构或当地心理援助热线。</view>
     </view>
 
-    <view v-for="item in consultants" :key="item.id" class="card">
-      <view class="row">
-        <image class="avatar" :src="imageUrl(item.avatar_url)" mode="aspectFill" @error="usePlaceholder(item, 'avatar_url')" />
-        <view>
-          <view class="title">{{ item.name }}</view>
-          <view class="desc">{{ item.title }} · {{ item.speciality }}</view>
-        </view>
+    <view v-for="item in supportItems" :key="item.title" class="card support-card">
+      <view class="tag">{{ item.tag }}</view>
+      <view class="title">{{ item.title }}</view>
+      <view class="desc">{{ item.desc }}</view>
+      <view class="steps">
+        <view v-for="step in item.steps" :key="step" class="step">{{ step }}</view>
       </view>
-      <view class="btn" @tap="book(item)">预约 {{ form.date }} {{ form.time }}</view>
+      <view class="btn secondary support-btn" @tap="copyItem(item)">复制指引</view>
     </view>
 
-    <view class="section-title">我的预约</view>
-    <view class="tabs">
-      <view v-for="item in appointmentTabs" :key="item.value" class="tab" :class="{ active: appointmentFilter === item.value }" @tap="appointmentFilter = item.value">{{ item.label }}</view>
-    </view>
-    <view v-if="visibleAppointments.length === 0" class="card">
-      <view class="desc">还没有预约记录。</view>
-    </view>
-    <view v-for="item in visibleAppointments" :key="item.id" class="card appointment">
-      <view class="title">{{ item.consultant_name }} · {{ item.method }}</view>
-      <view class="desc">{{ item.appointment_time }}</view>
-      <view class="tag">{{ item.status }}</view>
-      <view class="desc" v-if="item.notes">{{ item.notes }}</view>
-      <view class="appointment-actions" v-if="item.status !== '已取消'">
-        <view class="btn secondary action-btn" @tap="reschedule(item)">按上方时间改约</view>
-        <view class="btn danger action-btn" @tap="cancel(item)">取消预约</view>
-      </view>
+    <view class="section-title">更多支持</view>
+    <view class="card support-card">
+      <view class="title">企业内部支持</view>
+      <view class="desc">如需进一步帮助，可通过企业内部公开渠道联系 HR 或员工关怀负责人。</view>
     </view>
   </view>
 </template>
 
 <script setup>
-import { onShow } from '@dcloudio/uni-app'
-import { computed, reactive, ref } from 'vue'
-import { imageUrl, usePlaceholder } from '../../utils/images.js'
-import { request, requireEmployee } from '../../utils/request.js'
-
-const consultants = ref([])
-const appointments = ref([])
-const appointmentFilter = ref('active')
-const methods = ['视频', '语音']
-const times = ['09:30:00', '10:00:00', '14:00:00', '15:30:00', '19:00:00']
-const appointmentTabs = [
-  { label: '有效', value: 'active' },
-  { label: '已取消', value: 'canceled' },
-  { label: '全部', value: 'all' }
+const supportItems = [
+  {
+    tag: '情绪调节',
+    title: '三分钟呼吸练习',
+    desc: '适合紧张、烦躁或注意力难以集中时使用。',
+    steps: ['找一个安静位置坐稳', '吸气 4 秒，停顿 2 秒，呼气 6 秒', '重复 6 到 8 轮后记录当前感受']
+  },
+  {
+    tag: '压力识别',
+    title: '把压力拆成一件小事',
+    desc: '把当前最重的事情拆成今天可以完成的第一步。',
+    steps: ['写下最困扰的一件事', '标出可控和不可控部分', '只选择一个 15 分钟内能完成的动作']
+  },
+  {
+    tag: '求助路径',
+    title: '需要帮助时的处理顺序',
+    desc: '当情绪持续影响睡眠、饮食或工作时，优先寻求现实支持。',
+    steps: ['先联系可信任的家人或同事', '同步企业 HR 或员工关怀负责人', '必要时前往正规医疗机构获取专业帮助']
+  }
 ]
-const visibleAppointments = computed(() => {
-  if (appointmentFilter.value === 'all') return appointments.value
-  if (appointmentFilter.value === 'canceled') return appointments.value.filter((item) => item.status === '已取消')
-  return appointments.value.filter((item) => item.status !== '已取消')
-})
-const method = ref('视频')
-const form = reactive({
-  date: nextDate(),
-  time: '10:00:00',
-  notes: ''
-})
 
-function nextDate() {
-  const value = new Date(Date.now() + 24 * 60 * 60 * 1000)
-  return value.toISOString().slice(0, 10)
-}
-
-async function loadData() {
-  const id = requireEmployee()
-  if (!id) return
-  consultants.value = await request('/mobile/consultants')
-  appointments.value = await request(`/mobile/appointments?employeeId=${id}`)
-}
-
-async function book(item) {
-  const id = requireEmployee()
-  if (!id) return
-  await request('/mobile/appointments', {
-    method: 'POST',
-    data: {
-      employeeId: id,
-      consultantId: item.id,
-      appointmentTime: `${form.date} ${form.time}`,
-      method: method.value,
-      notes: form.notes || '小程序预约'
-    }
-  })
-  uni.showToast({ title: '预约已提交' })
-  form.notes = ''
-  await loadData()
-}
-
-async function reschedule(item) {
-  const id = requireEmployee()
-  if (!id) return
-  await request(`/mobile/appointments/${item.id}/reschedule`, {
-    method: 'PUT',
-    data: {
-      employeeId: id,
-      appointmentTime: `${form.date} ${form.time}`,
-      method: method.value,
-      notes: form.notes || item.notes || '小程序改约'
-    }
-  })
-  uni.showToast({ title: '已改约' })
-  await loadData()
-}
-
-async function cancel(item) {
-  const id = requireEmployee()
-  if (!id) return
-  uni.showModal({
-    title: '取消预约',
-    content: `确认取消 ${item.consultant_name} 的咨询预约吗？`,
-    success: async (res) => {
-      if (!res.confirm) return
-      await request(`/mobile/appointments/${item.id}/cancel`, {
-        method: 'PUT',
-        data: { employeeId: id }
-      })
-      uni.showToast({ title: '已取消' })
-      await loadData()
-    }
+function copyItem(item) {
+  uni.setClipboardData({
+    data: `${item.title}\n${item.steps.join('\n')}`
   })
 }
-
-onShow(loadData)
 </script>
 
 <style scoped>
-.avatar {
-  width: 112rpx;
-  height: 112rpx;
-  border-radius: 50%;
-  background: #eef5ff;
-  box-shadow: 0 8rpx 22rpx rgba(78, 97, 145, 0.1);
-}
-
-.picker {
-  display: flex;
-  align-items: center;
-  margin: 22rpx 0 16rpx;
-}
-
-.textarea {
-  width: 100%;
-  min-height: 150rpx;
-  padding: 18rpx;
-  border: 1rpx solid #e4eaf7;
-  border-radius: 12rpx;
-  background: #fbfcff;
-  box-sizing: border-box;
-}
-
-.booking-form {
-  margin-top: 20rpx;
-}
-
-.tabs {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14rpx;
-  margin: 0 0 18rpx;
-}
-
-.tab {
-  height: 66rpx;
-  display: grid;
-  place-items: center;
-  border-radius: 12rpx;
-  background: rgba(255, 255, 255, 0.94);
-  border: 1rpx solid #edf1fb;
-  color: #747b92;
-  font-size: 24rpx;
-  font-weight: 800;
-}
-
-.tab.active {
-  background: linear-gradient(90deg, #3f72f5 0%, #9a5ce4 100%);
-  color: #ffffff;
-}
-
-.appointment {
+.intro-card,
+.support-card {
   display: block;
 }
 
-.appointment-actions {
+.steps {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14rpx;
+  gap: 12rpx;
   margin-top: 18rpx;
 }
 
-.action-btn {
-  height: 68rpx;
-  font-size: 24rpx;
+.step {
+  padding: 16rpx 18rpx;
+  border-radius: 12rpx;
+  background: #f0f5ff;
+  color: #315ed6;
+  font-size: 25rpx;
+  font-weight: 700;
+  line-height: 1.5;
 }
 
-.danger {
-  background: #fff0f0;
-  color: #d64242;
-  box-shadow: none;
+.support-btn {
+  height: 68rpx;
+  margin-top: 18rpx;
+  font-size: 24rpx;
 }
 </style>

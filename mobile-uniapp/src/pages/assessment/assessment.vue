@@ -1,8 +1,8 @@
 <template>
   <view class="page">
     <view class="hero">
-      <view class="hero-title">AI 情绪筛查</view>
-      <view class="hero-sub">支持中途暂停与断点续答，提交后实时生成个人筛查报告。</view>
+      <view class="hero-title">情绪筛查</view>
+      <view class="hero-sub">支持中途暂停与断点续答，提交后形成个人筛查报告。</view>
       <image class="hero-visual" src="/static/theme/screening.png" mode="aspectFill" />
     </view>
 
@@ -187,7 +187,7 @@ async function submit() {
     method: 'POST',
     data: { employeeId: id, score, answers: { ...answers }, enterpriseNoticeConsent: enterpriseNoticeConsent.value }
   })
-  uni.showToast({ title: '报告已生成' })
+  uni.showToast({ title: '报告已完成' })
   active.value = null
   clearDraft()
   if (report?.id) {

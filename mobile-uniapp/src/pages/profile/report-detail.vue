@@ -2,13 +2,13 @@
   <view class="page">
     <view class="hero">
       <view class="hero-title">{{ detail.report?.risk_level || '报告详情' }}</view>
-      <view class="hero-sub">{{ detail.report?.summary || '完成筛查后，系统会生成个人情绪报告和干预建议。' }}</view>
+      <view class="hero-sub">{{ detail.report?.summary || '完成筛查后，系统会形成个人情绪报告和干预建议。' }}</view>
       <image class="hero-visual" src="/static/theme/report.png" mode="aspectFill" />
     </view>
 
     <view class="card score-card">
       <view>
-        <view class="title">{{ detail.report?.screening_title || 'AI 情绪筛查' }}</view>
+        <view class="title">{{ detail.report?.screening_title || '情绪筛查' }}</view>
         <view class="desc">{{ detail.report?.created_at }}</view>
       </view>
       <view class="score">{{ detail.report?.score || '--' }}</view>
@@ -26,7 +26,7 @@
       </view>
     </view>
 
-    <view class="section-title">AI 建议</view>
+    <view class="section-title">筛查建议</view>
     <view class="card">
       <view class="desc">{{ detail.report?.suggestion || '暂无建议' }}</view>
       <view class="tag risk-points" v-if="detail.report?.risk_points">风险点：{{ detail.report.risk_points }}</view>
@@ -63,7 +63,7 @@
 
     <view class="action-grid">
       <view class="btn secondary" @tap="go('/pages/course/course')">查看课程</view>
-      <view class="btn" @tap="go('/pages/consult/consult')">预约咨询</view>
+      <view class="btn" @tap="go('/pages/consult/consult')">心理支持</view>
     </view>
   </view>
 </template>
@@ -97,7 +97,7 @@ function go(url) {
 function openPlan(plan) {
   recordPlan(plan, '查看')
   const action = String(plan.action_type || '')
-  if (action.includes('咨询')) {
+  if (action.includes('心理支持')) {
     go('/pages/consult/consult')
     return
   }

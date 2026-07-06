@@ -99,7 +99,7 @@ const summaryText = computed(() => {
   if (!logs.value.length) return '先记录一次状态'
   if (averageMood.value >= 75) return '整体状态平稳'
   if (averageMood.value >= 55) return '近期略有波动'
-  return '建议预约一次支持'
+  return '建议查看支持资源'
 })
 const careTip = computed(() => {
   if (Number(form.workStress) >= 70) {
@@ -109,7 +109,7 @@ const careTip = computed(() => {
     return { title: '做一次边界沟通', desc: '把今天最需要协助的一件家务或育儿安排说清楚。' }
   }
   if (Number(form.moodScore) < 55) {
-    return { title: '安排三分钟呼吸', desc: '先做一次慢呼吸，再决定是否预约咨询或记录更多细节。' }
+    return { title: '安排三分钟呼吸', desc: '先做一次慢呼吸，再决定是否查看支持资源或记录更多细节。' }
   }
   return { title: '保持微小行动', desc: '今天记录一个让你状态稳定的小因素，明天继续观察。' }
 })

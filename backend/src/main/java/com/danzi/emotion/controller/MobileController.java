@@ -92,24 +92,8 @@ public class MobileController {
                 "employee", employee,
                 "latestReport", first("select * from screening_reports where employee_id = ? order by created_at desc limit 1", employeeId),
                 "latestMood", first("select * from mood_logs where employee_id = ? order by logged_at desc limit 1", employeeId),
-                "nextAppointment", first("""
-                        select a.*, c.name consultant_name
-                        from appointments a
-                        left join consultants c on a.consultant_id = c.id
-                        where a.employee_id = ? and a.status <> '已取消' and a.appointment_time >= now()
-                        order by a.appointment_time asc
-                        limit 1
-                        """, employeeId),
                 "courses", courseRows(employeeId, 4),
                 "notifications", notifications(employee),
-                "communityPosts", jdbcTemplate.queryForList("""
-                        select p.*, if(p.anonymous = 1, '匿名同事', e.name) author_name
-                        from community_posts p
-                        left join employees e on e.id = p.employee_id
-                        where p.status = '发布'
-                        order by p.created_at desc
-                        limit 3
-                        """),
                 "policies", jdbcTemplate.queryForList("select * from policies where status = '发布' order by id desc limit 3")
         ));
     }
@@ -149,7 +133,7 @@ public class MobileController {
             ps.setLong(2, id);
             ps.setInt(3, score);
             ps.setString(4, risk);
-            ps.setString(5, "AI 已生成本次情绪筛查摘要，并完成匿名化风险评估");
+            ps.setString(5, "已形成本次情绪筛查摘要，并完成匿名化风险评估");
             ps.setString(6, suggestion);
             ps.setString(7, riskPoints);
             ps.setString(8, answersJson);
@@ -253,61 +237,27 @@ public class MobileController {
 
     @GetMapping("/consultants")
     public ApiResponse<List<Map<String, Object>>> consultants() {
-        return ApiResponse.ok(jdbcTemplate.queryForList("select * from consultants where status = '可预约' order by id desc"));
+        return ApiResponse.ok(List.of());
     }
 
     @GetMapping("/appointments")
     public ApiResponse<List<Map<String, Object>>> appointments(@RequestParam(defaultValue = "1") long employeeId) {
-        return ApiResponse.ok(jdbcTemplate.queryForList("""
-                select a.*, c.name consultant_name, c.title consultant_title, c.avatar_url consultant_avatar_url
-                from appointments a
-                left join consultants c on a.consultant_id = c.id
-                where a.employee_id = ?
-                order by a.appointment_time desc
-                """, employeeId));
+        return ApiResponse.ok(List.of());
     }
 
     @PostMapping("/appointments")
     public ApiResponse<Void> appointment(@RequestBody Map<String, Object> body) {
-        if (first("select id from employees where id = ?", body.get("employeeId")).isEmpty()) {
-            return ApiResponse.fail("员工账号不存在");
-        }
-        if (first("select id from consultants where id = ? and status = '可预约'", body.get("consultantId")).isEmpty()) {
-            return ApiResponse.fail("咨询师不可预约");
-        }
-        jdbcTemplate.update("""
-                insert into appointments(employee_id, consultant_id, appointment_time, method, status, notes, image_url)
-                values (?, ?, ?, ?, '待确认', ?, ?)
-                """, body.get("employeeId"), body.get("consultantId"), body.get("appointmentTime"), body.get("method"), body.get("notes"), mockImage("appointment.jpg"));
-        return ApiResponse.ok(null);
+        return ApiResponse.fail("当前版本暂不提供该服务");
     }
 
     @PutMapping("/appointments/{id}/cancel")
     public ApiResponse<Void> cancelAppointment(@PathVariable long id, @RequestBody Map<String, Object> body) {
-        long employeeId = Long.parseLong(String.valueOf(body.getOrDefault("employeeId", 1)));
-        if (first("select id from employees where id = ?", employeeId).isEmpty()) {
-            return ApiResponse.fail("员工账号不存在");
-        }
-        jdbcTemplate.update("""
-                update appointments
-                set status = '已取消'
-                where id = ? and employee_id = ? and status <> '已取消'
-                """, id, employeeId);
-        return ApiResponse.ok(null);
+        return ApiResponse.fail("当前版本暂不提供该服务");
     }
 
     @PutMapping("/appointments/{id}/reschedule")
     public ApiResponse<Void> rescheduleAppointment(@PathVariable long id, @RequestBody Map<String, Object> body) {
-        long employeeId = Long.parseLong(String.valueOf(body.getOrDefault("employeeId", 1)));
-        if (first("select id from employees where id = ?", employeeId).isEmpty()) {
-            return ApiResponse.fail("员工账号不存在");
-        }
-        jdbcTemplate.update("""
-                update appointments
-                set appointment_time = ?, method = ?, notes = ?, status = '待确认'
-                where id = ? and employee_id = ?
-                """, body.get("appointmentTime"), body.get("method"), body.get("notes"), id, employeeId);
-        return ApiResponse.ok(null);
+        return ApiResponse.fail("当前版本暂不提供该服务");
     }
 
     @PostMapping("/moods")
@@ -411,44 +361,12 @@ public class MobileController {
 
     @GetMapping("/community-posts")
     public ApiResponse<List<Map<String, Object>>> communityPosts(@RequestParam(required = false) String category) {
-        if (category == null || category.isBlank() || "全部".equals(category)) {
-            return ApiResponse.ok(jdbcTemplate.queryForList("""
-                    select p.*, if(p.anonymous = 1, '匿名同事', e.name) author_name
-                    from community_posts p
-                    left join employees e on e.id = p.employee_id
-                    where p.status = '发布'
-                    order by p.created_at desc
-                    """));
-        }
-        return ApiResponse.ok(jdbcTemplate.queryForList("""
-                select p.*, if(p.anonymous = 1, '匿名同事', e.name) author_name
-                from community_posts p
-                left join employees e on e.id = p.employee_id
-                where p.status = '发布' and p.category = ?
-                order by p.created_at desc
-                """, category));
+        return ApiResponse.ok(List.of());
     }
 
     @PostMapping("/community-posts")
     public ApiResponse<Void> communityPost(@RequestBody Map<String, Object> body) {
-        if (first("select id from employees where id = ?", body.get("employeeId")).isEmpty()) {
-            return ApiResponse.fail("员工账号不存在");
-        }
-        String title = String.valueOf(body.getOrDefault("title", "")).trim();
-        String content = String.valueOf(body.getOrDefault("content", "")).trim();
-        if (title.isBlank() || content.isBlank()) {
-            return ApiResponse.fail("请填写标题和内容");
-        }
-        jdbcTemplate.update("""
-                insert into community_posts(employee_id, category, title, content, anonymous, status)
-                values (?, ?, ?, ?, ?, '发布')
-                """,
-                body.get("employeeId"),
-                body.getOrDefault("category", "经验分享"),
-                title,
-                content,
-                Boolean.parseBoolean(String.valueOf(body.getOrDefault("anonymous", true))));
-        return ApiResponse.ok(null);
+        return ApiResponse.fail("当前版本暂不提供该服务");
     }
 
     @GetMapping("/notifications")
@@ -554,8 +472,8 @@ public class MobileController {
 
     private String suggestionFor(String risk) {
         return switch (risk) {
-            case "高风险" -> "建议优先预约专业咨询，并按自主意愿决定是否接收企业关怀跟进";
-            case "中风险" -> "建议选择 1 对 1 咨询入口或岗位沟通清单，连续记录七日状态";
+            case "高风险" -> "建议优先查看心理支持资源，并按自主意愿决定是否接收企业关怀跟进";
+            case "中风险" -> "建议查看心理支持资源或岗位沟通清单，连续记录七日状态";
             default -> "建议使用正念练习、呼吸放松等自助工具，并保持状态记录";
         };
     }
