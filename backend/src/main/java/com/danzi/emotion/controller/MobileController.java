@@ -96,7 +96,7 @@ public class MobileController {
                         select a.*, c.name consultant_name
                         from appointments a
                         left join consultants c on a.consultant_id = c.id
-                        where a.employee_id = ? and a.status <> '已取消'
+                        where a.employee_id = ? and a.status <> '已取消' and a.appointment_time >= now()
                         order by a.appointment_time asc
                         limit 1
                         """, employeeId),
