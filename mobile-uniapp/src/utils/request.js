@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:18763/api'
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:18763/api'
 
 export function request(path, options = {}) {
   return new Promise((resolve, reject) => {
